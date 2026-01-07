@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>GPS Scan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui; padding: 20px; }
+    button { font-size: 20px; padding: 12px 20px; }
+    #out { margin-top: 20px; font-size: 18px; white-space: pre-line; }
+  </style>
+</head>
+<body>
+
+<button id="scan">スキャン</button>
+<div id="out">未取得</div>
+
+<script>
+document.getElementById("scan").onclick = () => {
+  navigator.geolocation.getCurrentPosition(
+    p => {
+      out.textContent =
+        `緯度: ${p.coords.latitude}\n経度: ${p.coords.longitude}`;
+    },
+    e => {
+      out.textContent = "位置取得失敗";
+    }
+  );
+};
+</script>
+
+</body>
+</html>

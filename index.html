@@ -2,35 +2,44 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>GPS Test Field</title>
+  <title>TEST FIELD ALPHA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       margin: 0;
-      font-family: sans-serif;
       background: #111;
       color: #fff;
+      font-family: system-ui, sans-serif;
       text-align: center;
+    }
+    h1 {
+      margin: 12px 0 6px;
+      font-size: 22px;
+      letter-spacing: 1px;
     }
     canvas {
       background: #222;
-      display: block;
-      margin: 10px auto;
       border: 2px solid #555;
+      display: block;
+      margin: 0 auto;
     }
     button {
+      margin: 12px;
+      padding: 10px 24px;
       font-size: 18px;
-      padding: 10px 20px;
-      margin: 10px;
+      border-radius: 20px;
+      border: none;
     }
     #info {
       font-size: 14px;
+      margin-bottom: 12px;
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
 
-<h2>TEST FIELD ALPHA</h2>
+<h1>TEST FIELD ALPHA</h1>
 
 <canvas id="map" width="360" height="360"></canvas>
 
@@ -42,13 +51,13 @@
 const canvas = document.getElementById("map");
 const ctx = canvas.getContext("2d");
 
-// ===== マップ設定 =====
-const MAP_SIZE = 1000; // m
+const MAP_SIZE = 1000;     // m（1km四方）
 const CANVAS_SIZE = canvas.width;
 
-// 左下基準座標（架空）
-const baseLat = 35.000000;
-const baseLon = 139.000000;
+// ===== 現在地をマップ中央にする基準座標 =====
+// ※ 初回スキャン時に自動で上書きされる
+let centerLat = null;
+let centerLon = null;
 
 // ===== マップ描画 =====
 function drawMap() {
@@ -58,13 +67,17 @@ function drawMap() {
   ctx.strokeStyle = "#888";
   ctx.strokeRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-  // 中央砦
-  drawCircle(500, 500, 40, "#444");
+  // 市街地（南西）
+  drawRect(0, 0, 400, 400, "#2fbf2f");
 
-  // エリア分割（目安）
-  drawRect(0, 0, 400, 400, "#2a2");   // 市街地
-  drawRect(0, 600, 400, 400, "#262"); // 山
-  drawRect(600, 0, 400, 400, "#444"); // 平原
+  // 山エリア（北西）
+  drawRect(0, 600, 400, 400, "#256b25");
+
+  // 平原（南東）
+  drawRect(600, 0, 400, 400, "#444");
+
+  // 中央砦
+  drawCircle(500, 500, 40, "#666");
 }
 
 function drawRect(x, y, w, h, color) {
@@ -89,6 +102,10 @@ function drawCircle(x, y, r, color) {
   ctx.fill();
 }
 
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
 // ===== GPS取得 =====
 function scan() {
   navigator.geolocation.getCurrentPosition(
@@ -96,9 +113,23 @@ function scan() {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
-      // 緯度経度 → メートル
-      const x = (lon - baseLon) * Math.cos(baseLat * Math.PI / 180) * 111000;
-      const y = (lat - baseLat) * 111000;
+      // 初回スキャン時：現在地をマップ中央に設定
+      if (centerLat === null) {
+        centerLat = lat;
+        centerLon = lon;
+      }
+
+      // 緯度経度 → メートル差分
+      const dx = (lon - centerLon) * Math.cos(centerLat * Math.PI / 180) * 111000;
+      const dy = (lat - centerLat) * 111000;
+
+      // 中央(500,500)基準
+      let x = 500 + dx;
+      let y = 500 + dy;
+
+      // マップ外に出ないよう制限
+      x = clamp(x, 0, MAP_SIZE);
+      y = clamp(y, 0, MAP_SIZE);
 
       drawMap();
       drawPlayer(x, y);

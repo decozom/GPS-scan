@@ -51,11 +51,12 @@
 const canvas = document.getElementById("map");
 const ctx = canvas.getContext("2d");
 
-const MAP_SIZE = 1000;     // m（1km四方）
+// ===== マップ設定 =====
+const MAP_SIZE = 50000; // 50km 四方（m）
+const HALF_MAP = MAP_SIZE / 2;
 const CANVAS_SIZE = canvas.width;
 
 // ===== 現在地をマップ中央にする基準座標 =====
-// ※ 初回スキャン時に自動で上書きされる
 let centerLat = null;
 let centerLon = null;
 
@@ -67,34 +68,39 @@ function drawMap() {
   ctx.strokeStyle = "#888";
   ctx.strokeRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-  // 市街地（南西）
-  drawRect(0, 0, 400, 400, "#2fbf2f");
+  // エリア例（スケール拡張）
+  drawRect(-20000, -20000, 15000, 15000, "#2fbf2f"); // 市街地
+  drawRect(-20000, 5000, 15000, 15000, "#256b25");  // 山岳
+  drawRect(5000, -20000, 15000, 15000, "#444");    // 平原
 
-  // 山エリア（北西）
-  drawRect(0, 600, 400, 400, "#256b25");
+  // 中央拠点
+  drawCircle(0, 0, 1200, "#666");
+}
 
-  // 平原（南東）
-  drawRect(600, 0, 400, 400, "#444");
-
-  // 中央砦
-  drawCircle(500, 500, 40, "#666");
+function worldToCanvas(x, y) {
+  return {
+    x: (x + HALF_MAP) / MAP_SIZE * CANVAS_SIZE,
+    y: CANVAS_SIZE - (y + HALF_MAP) / MAP_SIZE * CANVAS_SIZE
+  };
 }
 
 function drawRect(x, y, w, h, color) {
+  const p = worldToCanvas(x, y + h);
   ctx.fillStyle = color;
   ctx.fillRect(
-    x / MAP_SIZE * CANVAS_SIZE,
-    CANVAS_SIZE - (y + h) / MAP_SIZE * CANVAS_SIZE,
+    p.x,
+    p.y,
     w / MAP_SIZE * CANVAS_SIZE,
     h / MAP_SIZE * CANVAS_SIZE
   );
 }
 
 function drawCircle(x, y, r, color) {
+  const p = worldToCanvas(x, y);
   ctx.beginPath();
   ctx.arc(
-    x / MAP_SIZE * CANVAS_SIZE,
-    CANVAS_SIZE - y / MAP_SIZE * CANVAS_SIZE,
+    p.x,
+    p.y,
     r / MAP_SIZE * CANVAS_SIZE,
     0, Math.PI * 2
   );
@@ -113,23 +119,17 @@ function scan() {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
-      // 初回スキャン時：現在地をマップ中央に設定
       if (centerLat === null) {
         centerLat = lat;
         centerLon = lon;
       }
 
-      // 緯度経度 → メートル差分
+      // 緯度経度 → メートル
       const dx = (lon - centerLon) * Math.cos(centerLat * Math.PI / 180) * 111000;
       const dy = (lat - centerLat) * 111000;
 
-      // 中央(500,500)基準
-      let x = 500 + dx;
-      let y = 500 + dy;
-
-      // マップ外に出ないよう制限
-      x = clamp(x, 0, MAP_SIZE);
-      y = clamp(y, 0, MAP_SIZE);
+      let x = clamp(dx, -HALF_MAP, HALF_MAP);
+      let y = clamp(dy, -HALF_MAP, HALF_MAP);
 
       drawMap();
       drawPlayer(x, y);
@@ -137,9 +137,7 @@ function scan() {
       document.getElementById("info").innerText =
         `lat:${lat.toFixed(6)} lon:${lon.toFixed(6)} | x:${x.toFixed(1)}m y:${y.toFixed(1)}m`;
     },
-    err => {
-      alert("GPS取得失敗");
-    },
+    () => alert("GPS取得失敗"),
     {
       enableHighAccuracy: true,
       maximumAge: 0,
@@ -149,13 +147,9 @@ function scan() {
 }
 
 function drawPlayer(x, y) {
+  const p = worldToCanvas(x, y);
   ctx.beginPath();
-  ctx.arc(
-    x / MAP_SIZE * CANVAS_SIZE,
-    CANVAS_SIZE - y / MAP_SIZE * CANVAS_SIZE,
-    6,
-    0, Math.PI * 2
-  );
+  ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
   ctx.fillStyle = "red";
   ctx.fill();
 }

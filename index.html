@@ -2,31 +2,135 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>GPS Scan</title>
+  <title>GPS Test Field</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: system-ui; padding: 20px; }
-    button { font-size: 20px; padding: 12px 20px; }
-    #out { margin-top: 20px; font-size: 18px; white-space: pre-line; }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+    }
+    canvas {
+      background: #222;
+      display: block;
+      margin: 10px auto;
+      border: 2px solid #555;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 10px;
+    }
+    #info {
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
 
-<button id="scan">スキャン</button>
-<div id="out">未取得</div>
+<h2>TEST FIELD ALPHA</h2>
+
+<canvas id="map" width="360" height="360"></canvas>
+
+<button onclick="scan()">📡 スキャン</button>
+
+<div id="info">未取得</div>
 
 <script>
-document.getElementById("scan").onclick = () => {
+const canvas = document.getElementById("map");
+const ctx = canvas.getContext("2d");
+
+// ===== マップ設定 =====
+const MAP_SIZE = 1000; // m
+const CANVAS_SIZE = canvas.width;
+
+// 左下基準座標（架空）
+const baseLat = 35.000000;
+const baseLon = 139.000000;
+
+// ===== マップ描画 =====
+function drawMap() {
+  ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+  // 外枠
+  ctx.strokeStyle = "#888";
+  ctx.strokeRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+  // 中央砦
+  drawCircle(500, 500, 40, "#444");
+
+  // エリア分割（目安）
+  drawRect(0, 0, 400, 400, "#2a2");   // 市街地
+  drawRect(0, 600, 400, 400, "#262"); // 山
+  drawRect(600, 0, 400, 400, "#444"); // 平原
+}
+
+function drawRect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(
+    x / MAP_SIZE * CANVAS_SIZE,
+    CANVAS_SIZE - (y + h) / MAP_SIZE * CANVAS_SIZE,
+    w / MAP_SIZE * CANVAS_SIZE,
+    h / MAP_SIZE * CANVAS_SIZE
+  );
+}
+
+function drawCircle(x, y, r, color) {
+  ctx.beginPath();
+  ctx.arc(
+    x / MAP_SIZE * CANVAS_SIZE,
+    CANVAS_SIZE - y / MAP_SIZE * CANVAS_SIZE,
+    r / MAP_SIZE * CANVAS_SIZE,
+    0, Math.PI * 2
+  );
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+// ===== GPS取得 =====
+function scan() {
   navigator.geolocation.getCurrentPosition(
-    p => {
-      out.textContent =
-        `緯度: ${p.coords.latitude}\n経度: ${p.coords.longitude}`;
+    pos => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      // 緯度経度 → メートル
+      const x = (lon - baseLon) * Math.cos(baseLat * Math.PI / 180) * 111000;
+      const y = (lat - baseLat) * 111000;
+
+      drawMap();
+      drawPlayer(x, y);
+
+      document.getElementById("info").innerText =
+        `lat:${lat.toFixed(6)} lon:${lon.toFixed(6)} | x:${x.toFixed(1)}m y:${y.toFixed(1)}m`;
     },
-    e => {
-      out.textContent = "位置取得失敗";
+    err => {
+      alert("GPS取得失敗");
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 10000
     }
   );
-};
+}
+
+function drawPlayer(x, y) {
+  ctx.beginPath();
+  ctx.arc(
+    x / MAP_SIZE * CANVAS_SIZE,
+    CANVAS_SIZE - y / MAP_SIZE * CANVAS_SIZE,
+    6,
+    0, Math.PI * 2
+  );
+  ctx.fillStyle = "red";
+  ctx.fill();
+}
+
+// 初期描画
+drawMap();
 </script>
 
 </body>

@@ -2,59 +2,62 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>サバゲー用GPSタイマー</title>
+<title>Field Timer</title>
 
 <style>
-  body {
-    margin: 0;
-    font-family: system-ui, sans-serif; /* フォント固定 */
-    background: #111;
-    color: #fff;
-    text-align: center;
-  }
+body {
+  background: black;
+  color: white;
+  font-family: system-ui, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
 
-  .screen {
-    display: none;
-    padding: 20px;
-  }
+/* ===== 画面切り替え ===== */
+.screen {
+  display: none;
+}
+.screen.active {
+  display: block;
+}
 
-  .screen.active {
-    display: block;
-  }
-
-  button {
-    font-size: 18px;
-    padding: 10px 20px;
-    margin: 6px;
-  }
-
-  #timerDisplay {
+/* ===== タイマー表示 ===== */
+#timerDisplay {
   font-size: 48px;
   margin: 20px 0;
   font-weight: bold;
-
-  /* ===== 斜線入り0を保証するフォント指定 ===== */
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-variant-numeric: tabular-nums;
-
-  width: 8ch;
+  width: 10ch;
   margin-left: auto;
   margin-right: auto;
   text-align: center;
 }
-  }
 
-  canvas {
-    background: #222;
-    border: 1px solid #555;
-  }
+/* 点滅 */
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+.blink {
+  animation: blink 1s infinite;
+}
 
-  #versionDisplay {
-    margin-top: 20px;
-    font-size: 14px;
-    opacity: 0.6;
-  }
+/* ボタン */
+button {
+  font-size: 16px;
+  margin: 5px;
+  padding: 10px 15px;
+}
+
+#versionDisplay {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+  margin-top: 20px;
+}
 </style>
 </head>
 
@@ -62,188 +65,131 @@
 
 <!-- ===== メイン画面 ===== -->
 <div id="mainScreen" class="screen active">
-  <h1>フィールド選択</h1>
-  <button onclick="openField()">スタート</button>
-
-  <!-- バージョン表示 -->
-  <div id="versionDisplay">Ver.0.0</div>
+  <h2>フィールド選択</h2>
+  <button onclick="openField()">フィールドへ</button>
+  <div id="versionDisplay">v0.0</div>
 </div>
 
 <!-- ===== フィールド画面 ===== -->
 <div id="fieldScreen" class="screen">
   <div id="timerDisplay">00:00</div>
 
-  <canvas id="map" width="300" height="300"></canvas>
-
-  <div>
-    <button onclick="toggleTimer()" id="startStopBtn">スタート</button>
-    <button onclick="resetTimer()">リセット</button>
-    <button onclick="scanPosition()">スキャン</button>
-    <br>
-    <button onclick="openSettings()">設定</button>
-  </div>
+  <button onclick="toggleTimer()">スタート / ストップ</button>
+  <button onclick="resetTimer()">リセット</button>
+  <button onclick="scan()">スキャン</button>
+  <button onclick="openSettings()">設定</button>
 </div>
 
 <!-- ===== 設定画面 ===== -->
-<div id="settingsScreen" class="screen">
-  <h2>設定</h2>
-  <button onclick="backToMain()">メイン画面に戻る</button><br>
+<div id="settingScreen" class="screen">
+  <h3>設定</h3>
+
   <button onclick="openTimerSetting()">タイマーセット</button>
+  <br><br>
+  <button onclick="backToMain()">メイン画面に戻る</button>
 </div>
 
-<!-- ===== タイマー設定 ===== -->
+<!-- ===== タイマー設定画面 ===== -->
 <div id="timerSettingScreen" class="screen">
-  <h2>ゲーム時間（分）</h2>
-  <input id="gameMinutes" type="number" min="1" value="10">
+  <h3>タイマー設定（分）</h3>
+
+  <!-- ★ これが input。最初から value="0" -->
+  <input type="number" id="minuteInput" min="0" value="0">
   <br><br>
-  <button onclick="saveTimer()">保存</button>
+
+  <button onclick="setTimer()">設定</button>
+  <button onclick="openSettings()">戻る</button>
 </div>
 
 <script>
-/* ===============================
-   アプリ設定
-=============================== */
-const APP_VERSION = "0.1";   // ← 次は 0.1 / 0.2 にここだけ変更
+let timerId = null;
+let remainingMs = 0;
+let running = false;
 
-/* ===== ユーティリティ ===== */
-function $(id) {
-  return document.getElementById(id);
+/* ===== 画面切り替え ===== */
+function show(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
 }
 
-const mainScreen = $("mainScreen");
-const fieldScreen = $("fieldScreen");
-const settingsScreen = $("settingsScreen");
-const timerSettingScreen = $("timerSettingScreen");
-const timerDisplay = $("timerDisplay");
-const startStopBtn = $("startStopBtn");
-
-/* ===== 画面遷移 ===== */
-function showScreen(screen) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  screen.classList.add("active");
-}
-
-function openField() {
-  showScreen(fieldScreen);
-}
-
-function openSettings() {
-  showScreen(settingsScreen);
-}
-
-function backToMain() {
-  stopTimer();
-  remainingMs = 0;
-  updateTimerDisplay();
-  showScreen(mainScreen);
-}
-
-function openTimerSetting() {
-  $("gameMinutes").value = gameTimeMs / 60000;
-  showScreen(timerSettingScreen);
-}
-
-function saveTimer() {
-  const min = Number($("gameMinutes").value);
-  gameTimeMs = min * 60000;
-  remainingMs = gameTimeMs;
-  updateTimerDisplay();
-  showScreen(fieldScreen);
-}
+function openField() { show('fieldScreen'); }
+function openSettings() { show('settingScreen'); }
+function backToMain() { show('mainScreen'); }
+function openTimerSetting() { show('timerSettingScreen'); }
 
 /* ===== タイマー ===== */
-let gameTimeMs = 10 * 60000;
-let remainingMs = 0;
-let timerRunning = false;
-let startTime = 0;
-let rafId = null;
-
-function updateTimerDisplay() {
-  if (remainingMs <= 0) {
-    timerDisplay.textContent = "00:00";
-    timerDisplay.style.color = "white";
-    return;
-  }
-
-  const min = Math.floor(remainingMs / 60000);
-  const sec = Math.floor((remainingMs % 60000) / 1000);
-  const cs  = Math.floor((remainingMs % 1000) / 10);
-
-  if (remainingMs > 3 * 60000) {
-    timerDisplay.textContent =
-      `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-    timerDisplay.style.color = "white";
-  } else {
-    timerDisplay.textContent =
-      `${String(min).padStart(2, "0")}:` +
-      `${String(sec).padStart(2, "0")}:` +
-      `${String(cs).padStart(2, "0")}`;
-    timerDisplay.style.color = "red";
-  }
-}
-
-function tick(now) {
-  if (!timerRunning) return;
-
-  const elapsed = now - startTime;
-  remainingMs = Math.max(gameTimeMs - elapsed, 0);
-  updateTimerDisplay();
-
-  if (remainingMs === 0) {
-    stopTimer();
-    return;
-  }
-  rafId = requestAnimationFrame(tick);
-}
-
-function startTimer() {
-  if (timerRunning) return;
-  if (remainingMs <= 0) remainingMs = gameTimeMs;
-
-  timerRunning = true;
-  startTime = performance.now() - (gameTimeMs - remainingMs);
-  startStopBtn.textContent = "ストップ";
-  rafId = requestAnimationFrame(tick);
-}
-
-function stopTimer() {
-  timerRunning = false;
-  cancelAnimationFrame(rafId);
-  startStopBtn.textContent = "スタート";
-}
-
 function toggleTimer() {
-  timerRunning ? stopTimer() : startTimer();
+  if (running) {
+    clearInterval(timerId);
+    running = false;
+    return;
+  }
+  if (remainingMs <= 0) return;
+
+  running = true;
+  const start = Date.now();
+  const startRemain = remainingMs;
+
+  timerId = setInterval(() => {
+    remainingMs = startRemain - (Date.now() - start);
+    if (remainingMs <= 0) {
+      remainingMs = 0;
+      clearInterval(timerId);
+      running = false;
+    }
+    updateDisplay();
+  }, 50);
 }
 
 function resetTimer() {
-  stopTimer();
-  remainingMs = gameTimeMs;
-  updateTimerDisplay();
+  clearInterval(timerId);
+  running = false;
+  remainingMs = 0;
+  updateDisplay();
 }
 
-/* ===== スキャン（仮） ===== */
-function scanPosition() {
-  alert("スキャン実行（※ GPS未実装）");
+function setTimer() {
+  const min = Number(document.getElementById('minuteInput').value);
+  remainingMs = min * 60 * 1000;
+  updateDisplay();
+  show('fieldScreen');
 }
 
-/* ===== 初期化 ===== */
-$("versionDisplay").textContent = "Ver." + APP_VERSION;
-remainingMs = 0;
-updateTimerDisplay();
+function updateDisplay() {
+  const d = document.getElementById('timerDisplay');
+  d.classList.remove('blink');
+  d.style.color = 'white';
 
-/* ===== 仮マップ ===== */
-const ctx = $("map").getContext("2d");
-ctx.strokeStyle = "#555";
-for (let i = 0; i <= 300; i += 50) {
-  ctx.beginPath();
-  ctx.moveTo(i, 0);
-  ctx.lineTo(i, 300);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(0, i);
-  ctx.lineTo(300, i);
-  ctx.stroke();
+  if (remainingMs <= 0) {
+    d.textContent = '00:00';
+    return;
+  }
+
+  const totalSec = remainingMs / 1000;
+  const min = Math.floor(totalSec / 60);
+  const sec = Math.floor(totalSec % 60);
+  const cs = Math.floor((remainingMs % 1000) / 10);
+
+  if (remainingMs <= 30000) {
+    d.style.color = 'red';
+    d.classList.add('blink');
+  }
+
+  if (remainingMs <= 180000) {
+    d.textContent =
+      String(min).padStart(2, '0') + ':' +
+      String(sec).padStart(2, '0') + ':' +
+      String(cs).padStart(2, '0');
+  } else {
+    d.textContent =
+      String(min).padStart(2, '0') + ':' +
+      String(sec).padStart(2, '0');
+  }
+}
+
+/* ===== ダミー ===== */
+function scan() {
+  alert('スキャン（仮）');
 }
 </script>
 

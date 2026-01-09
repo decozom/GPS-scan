@@ -38,6 +38,7 @@ canvas {
 #timerDisplay {
   font-size: 40px;
   font-weight: bold;
+  color: white;
 }
 </style>
 </head>
@@ -99,16 +100,18 @@ function updateTimerDisplay() {
   const totalSeconds = remainingMs / 1000;
   const min = Math.floor(totalSeconds / 60);
   const sec = Math.floor(totalSeconds % 60);
-  const dec = Math.floor((remainingMs % 1000) / 100); // 0.1秒
+  const dec = Math.floor((remainingMs % 1000) / 100);
 
   timerDisplay.textContent =
     `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${dec}`;
 
-  // 残り3分で赤
-  if (remainingMs <= 180000) {
+  /* ★ 修正ここ ★ */
+  if (remainingMs <= 3 * 60 * 1000) {
     timerDisplay.style.color = "red";
+    timerDisplay.style.textShadow = "0 0 8px red";
   } else {
     timerDisplay.style.color = "white";
+    timerDisplay.style.textShadow = "none";
   }
 }
 
@@ -186,7 +189,6 @@ function drawMap() {
     ctx.stroke();
   }
 
-  // 自分の位置（仮）
   ctx.fillStyle = "lime";
   ctx.beginPath();
   ctx.arc(150, 150, 6, 0, Math.PI * 2);

@@ -113,7 +113,7 @@ button {
 ================================ -->
 <div id="main" class="screen active">
   <h1>Field Map</h1>
-  <div class="version">Version 0.0</div>
+  <div class="version">Version 0.4</div>
   <button onclick="openField()">START</button>
 </div>
 
@@ -257,7 +257,7 @@ function updateDisplay() {
   // ★ タイマーが動いている時だけ警告表示
   if (running) {
     if (ms <= 180000) t.classList.add('red');     // 3分以下で赤
-    if (ms <= 30000)  t.classList.add('blink');  // 30秒以下で点滅
+    if (ms <= 60000)  t.classList.add('blink');  // 30秒以下で点滅
   }
 
   // 表示形式切り替え

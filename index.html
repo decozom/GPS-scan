@@ -9,15 +9,16 @@
 <title>Field Timer</title>
 
 <style>
-/* ================================
-   全体設定
-================================ */
+/* ==================================================
+   全体共通設定
+================================================== */
 body {
   margin: 0;
   background: #111;
   color: #eee;
   text-align: center;
-  font-family: "JetBrains Mono", "Source Code Pro", monospace; /* ← フォント固定 */
+  /* フォント固定（斜線入り0が使える） */
+  font-family: "JetBrains Mono", "Source Code Pro", monospace;
 }
 
 /* 画面切り替え用 */
@@ -29,21 +30,21 @@ body {
   display: block;
 }
 
-/* ================================
+/* ==================================================
    メイン画面
-================================ */
+================================================== */
 .version {
   font-size: 14px;
   color: #aaa;
 }
 
-/* ================================
+/* ==================================================
    タイマー表示
-================================ */
+================================================== */
 #timer {
   font-size: 48px;
   margin: 15px auto;
-  width: 280px;                 /* ← 表示ズレ防止 */
+  width: 280px; /* 数字ズレ防止 */
   font-variant-numeric: slashed-zero; /* 斜線入り0 */
 }
 
@@ -54,17 +55,17 @@ body {
 
 /* 30秒以下で点滅 */
 .blink {
-  animation: blink 0.6s steps(1) infinite;
+  animation: blink 0.5s steps(1) infinite;
 }
 
-/* 点滅アニメーション */
+/* 点滅アニメーション定義 */
 @keyframes blink {
   50% { opacity: 0; }
 }
 
-/* ================================
+/* ==================================================
    擬似マップ
-================================ */
+================================================== */
 #map {
   width: 300px;
   height: 300px;
@@ -74,6 +75,7 @@ body {
   position: relative;
 }
 
+/* グリッド表示 */
 .grid {
   position: absolute;
   width: 100%;
@@ -84,7 +86,7 @@ body {
     linear-gradient(to bottom, #333 1px, transparent 1px);
 }
 
-/* 自分の位置（仮） */
+/* 自分の位置（仮表示） */
 .player {
   width: 10px;
   height: 10px;
@@ -95,9 +97,19 @@ body {
   left: 145px;
 }
 
-/* ================================
-   ボタン
-================================ */
+/* ==================================================
+   GPS表示
+================================================== */
+#gps {
+  font-size: 14px;
+  margin-top: 8px;
+  color: #8cf;
+  line-height: 1.4;
+}
+
+/* ==================================================
+   ボタン共通
+================================================== */
 button {
   font-size: 16px;
   padding: 8px 14px;
@@ -108,19 +120,20 @@ button {
 
 <body>
 
-<!-- ==============================
+<!-- ==================================================
      メイン画面
-================================ -->
+================================================== -->
 <div id="main" class="screen active">
   <h1>Field Map</h1>
-  <div class="version">Version 0.5</div>
+  <div class="version">Version 0.6</div>
   <button onclick="openField()">START</button>
 </div>
 
-<!-- ==============================
+<!-- ==================================================
      フィールド画面
-================================ -->
+================================================== -->
 <div id="field" class="screen">
+
   <!-- タイマー表示 -->
   <div id="timer">00:00</div>
 
@@ -130,6 +143,9 @@ button {
     <div class="player"></div>
   </div>
 
+  <!-- GPS情報表示 -->
+  <div id="gps">GPS: 未取得</div>
+
   <!-- 操作ボタン -->
   <button onclick="toggleStart()">START / STOP</button>
   <button onclick="resetTimer()">RESET</button>
@@ -137,18 +153,18 @@ button {
   <button onclick="openSettings()">SETTINGS</button>
 </div>
 
-<!-- ==============================
+<!-- ==================================================
      設定画面
-================================ -->
+================================================== -->
 <div id="settings" class="screen">
   <h2>Settings</h2>
   <button onclick="openTimerSet()">タイマーセット</button><br>
   <button onclick="backToMain()">メイン画面に戻る</button>
 </div>
 
-<!-- ==============================
+<!-- ==================================================
      タイマー設定画面
-================================ -->
+================================================== -->
 <div id="timerSet" class="screen">
   <h2>Timer Set (min)</h2>
   <!-- 初期値は0分 -->
@@ -159,74 +175,83 @@ button {
 </div>
 
 <script>
-/* ================================
+/* ==================================================
    タイマー関連変数
-================================ */
-// 設定された時間（ms）
+================================================== */
+
+// 設定されたゲーム時間（ms）
 let setTimeMs = 0;
 
-// 残り時間（ms）
+// 現在の残り時間（ms）
 let remainingMs = 0;
 
-// タイマー状態
+// タイマーが動作中かどうか
 let running = false;
 
-// setInterval管理
+// setInterval管理用
 let timerInterval = null;
 
-// 実時間計測用
+// 実時間計測用（ズレ防止）
 let startTimestamp = 0;
 let lastRemainingMs = 0;
 
-/* ================================
-   画面切り替え
-================================ */
+/* ==================================================
+   画面切り替え制御
+================================================== */
 function show(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen')
+    .forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-function openField() { show('field'); updateDisplay(); }
-function openSettings() { show('settings'); }
-function backToMain() { show('main'); }
-function openTimerSet() { show('timerSet'); }
+function openField()   { show('field'); updateDisplay(); }
+function openSettings(){ show('settings'); }
+function backToMain()  { show('main'); }
+function openTimerSet(){ show('timerSet'); }
 
-/* ================================
-   タイマー設定
-================================ */
+/* ==================================================
+   タイマー設定処理
+================================================== */
 function setTimer() {
   const min = Number(document.getElementById('minuteInput').value);
+
+  // 分 → ミリ秒に変換
   setTimeMs = min * 60 * 1000;
   remainingMs = setTimeMs;
+
   updateDisplay();
   show('field');
 }
 
-/* ================================
+/* ==================================================
    タイマー開始 / 停止
-================================ */
+================================================== */
 function toggleStart() {
   if (!running) {
+    // 残り0なら設定時間から開始
     if (remainingMs <= 0) remainingMs = setTimeMs;
 
     running = true;
     startTimestamp = performance.now();
     lastRemainingMs = remainingMs;
 
+    // 実時間差分方式（Safari対策）
     timerInterval = setInterval(() => {
       const now = performance.now();
       const elapsed = now - startTimestamp;
+
       remainingMs = Math.max(0, lastRemainingMs - elapsed);
 
       if (remainingMs === 0) stopTimer();
       updateDisplay();
     }, 50);
+
   } else {
     stopTimer();
   }
 }
 
-/* 停止処理 */
+/* タイマー停止 */
 function stopTimer() {
   running = false;
   clearInterval(timerInterval);
@@ -239,25 +264,55 @@ function resetTimer() {
   updateDisplay();
 }
 
-/* 仮GPSスキャン */
+/* ==================================================
+   GPSスキャン（現在位置取得）
+================================================== */
 function scan() {
-  alert("GPS Scan（仮）");
+  const gps = document.getElementById("gps");
+
+  if (!navigator.geolocation) {
+    gps.textContent = "GPS: 非対応端末";
+    return;
+  }
+
+  gps.textContent = "GPS: 取得中…";
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      const acc = Math.round(pos.coords.accuracy);
+
+      gps.innerHTML =
+        `LAT: ${lat}<br>` +
+        `LON: ${lon}<br>` +
+        `ACC: ±${acc} m`;
+    },
+    () => {
+      gps.textContent = "GPS: 取得失敗";
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
 }
 
-/* ================================
+/* ==================================================
    タイマー表示更新
-================================ */
+================================================== */
 function updateDisplay() {
   const t = document.getElementById('timer');
-  let ms = remainingMs;
+  const ms = remainingMs;
 
-  // 初期化（起動時・停止時は白で点滅なし）
+  // 毎回リセット
   t.classList.remove('red', 'blink');
 
-  // ★ タイマーが動いている時だけ警告表示
+  // タイマー動作中のみ警告表示
   if (running) {
-    if (ms <= 180000) t.classList.add('red');     // 3分以下で赤
-    if (ms <= 30000)  t.classList.add('blink');  // 30秒以下で点滅
+    if (ms <= 180000) t.classList.add('red');    // 3分以下で赤
+    if (ms <= 30000)  t.classList.add('blink'); // 30秒以下で点滅
   }
 
   // 表示形式切り替え
@@ -266,20 +321,17 @@ function updateDisplay() {
     const m = Math.floor(ms / 60000);
     const s = Math.floor((ms % 60000) / 1000);
     t.textContent =
-      String(m).padStart(2, '0') + ":" +
-      String(s).padStart(2, '0');
+      `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   } else {
     // 3分以下 → 分:秒:小数
     const m = Math.floor(ms / 60000);
     const s = Math.floor((ms % 60000) / 1000);
     const cs = Math.floor((ms % 1000) / 10);
     t.textContent =
-      String(m).padStart(2, '0') + ":" +
-      String(s).padStart(2, '0') + ":" +
-      String(cs).padStart(2, '0');
+      `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(cs).padStart(2,'0')}`;
   }
 
-  // 起動直後表示
+  // 起動直後・未設定時
   if (setTimeMs === 0 && !running) {
     t.textContent = "00:00";
   }

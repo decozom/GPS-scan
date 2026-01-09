@@ -1,99 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サバゲー用GPSタイマー</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #111;
+    color: #fff;
+    text-align: center;
+  }
+
+  .screen {
+    display: none;
+    padding: 20px;
+  }
+
+  .screen.active {
+    display: block;
+  }
+
+  button {
+    font-size: 18px;
+    padding: 10px 20px;
+    margin: 8px;
+  }
+
+  #timerDisplay {
+    font-size: 48px;
+    margin: 20px 0;
+    font-weight: bold;
+  }
+
+  canvas {
+    background: #222;
+    border: 1px solid #555;
+  }
+
+  input {
+    font-size: 18px;
+    width: 80px;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ===== メイン画面 ===== -->
+<div id="mainScreen" class="screen active">
+  <h1>フィールド選択</h1>
+  <button onclick="openField()">スタート</button>
+</div>
+
+<!-- ===== フィールド画面 ===== -->
+<div id="fieldScreen" class="screen">
+  <div id="timerDisplay">00:00</div>
+
+  <canvas id="map" width="300" height="300"></canvas>
+
+  <div>
+    <button onclick="startTimer()">スタート</button>
+    <button onclick="stopTimer()">ストップ</button>
+    <button onclick="openSettings()">設定</button>
+  </div>
+</div>
+
+<!-- ===== 設定画面 ===== -->
+<div id="settingsScreen" class="screen">
+  <h2>設定</h2>
+  <button onclick="backToMain()">メイン画面に戻る</button><br>
+  <button onclick="openTimerSetting()">タイマーセット</button>
+</div>
+
+<!-- ===== タイマー設定 ===== -->
+<div id="timerSettingScreen" class="screen">
+  <h2>ゲーム時間（分）</h2>
+  <input id="gameMinutes" type="number" min="1" value="10">
+  <br><br>
+  <button onclick="saveTimer()">保存</button>
+</div>
+
 <script>
-/* ===== 画面管理 ===== */
-const mainScreen = document.getElementById("mainScreen");
-const fieldScreen = document.getElementById("fieldScreen");
-const settingsScreen = document.getElementById("settingsScreen");
-const timerSettingScreen = document.getElementById("timerSettingScreen");
-const timerDisplay = document.getElementById("timerDisplay");
+/* ===== ユーティリティ ===== */
+function $(id) {
+  return document.getElementById(id);
+}
+
+const mainScreen = $("mainScreen");
+const fieldScreen = $("fieldScreen");
+const settingsScreen = $("settingsScreen");
+const timerSettingScreen = $("timerSettingScreen");
+const timerDisplay = $("timerDisplay");
 
 function showScreen(screen) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
 }
 
-/* ===== タイマー ===== */
-let gameTimeMs = 10 * 60 * 1000;
-let remainingMs = 0;
-
-let timerRunning = false;
-let startTimestamp = 0;
-let rafId = null;
-
-/* ---- 表示更新 ---- */
-function updateTimerDisplay() {
-  if (remainingMs <= 0) {
-    timerDisplay.textContent = "00:00";
-    timerDisplay.style.color = "white";
-    timerDisplay.style.textShadow = "none";
-    return;
-  }
-
-  const min = Math.floor(remainingMs / 60000);
-  const sec = Math.floor((remainingMs % 60000) / 1000);
-
-  if (remainingMs > 3 * 60 * 1000) {
-    timerDisplay.textContent =
-      `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-    timerDisplay.style.color = "white";
-    timerDisplay.style.textShadow = "none";
-    return;
-  }
-
-  const cs = Math.floor((remainingMs % 1000) / 10);
-  timerDisplay.textContent =
-    `${String(min).padStart(2, "0")}:` +
-    `${String(sec).padStart(2, "0")}:` +
-    `${String(cs).padStart(2, "0")}`;
-
-  timerDisplay.style.color = "red";
-  timerDisplay.style.textShadow = "0 0 8px red";
-}
-
-/* ---- 実時間ベースカウント ---- */
-function tick() {
-  if (!timerRunning) return;
-
-  const now = Date.now();
-  const elapsed = now - startTimestamp;
-  remainingMs = Math.max(gameTimeMs - elapsed, 0);
-
-  updateTimerDisplay();
-
-  if (remainingMs === 0) {
-    stopTimer();
-    return;
-  }
-
-  rafId = requestAnimationFrame(tick);
-}
-
-function startTimer() {
-  if (timerRunning) return;
-
-  timerRunning = true;
-  startTimestamp = Date.now() + (gameTimeMs - remainingMs);
-  tick();
-}
-
-function stopTimer() {
-  timerRunning = false;
-  cancelAnimationFrame(rafId);
-}
-
-function toggleTimer() {
-  timerRunning ? stopTimer() : startTimer();
-}
-
 /* ===== 画面遷移 ===== */
-function startGame() {
-  remainingMs = gameTimeMs;
-  updateTimerDisplay();
+function openField() {
   showScreen(fieldScreen);
-  drawMap();
 }
 
 function openSettings() {
-  stopTimer();
   showScreen(settingsScreen);
 }
 
@@ -105,44 +117,93 @@ function backToMain() {
 }
 
 function openTimerSetting() {
-  document.getElementById("gameMinutes").value = gameTimeMs / 60000;
+  $("gameMinutes").value = gameTimeMs / 60000;
   showScreen(timerSettingScreen);
 }
 
 function saveTimer() {
-  const min = Number(document.getElementById("gameMinutes").value);
+  const min = Number($("gameMinutes").value);
   gameTimeMs = min * 60000;
-  remainingMs = gameTimeMs;
+  remainingMs = 0;
   updateTimerDisplay();
   showScreen(fieldScreen);
 }
 
-/* ===== マップ ===== */
-function drawMap() {
-  const canvas = document.getElementById("map");
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+/* ===== タイマー ===== */
+let gameTimeMs = 10 * 60000;
+let remainingMs = 0;
+let timerRunning = false;
+let startTime = 0;
+let rafId = null;
 
-  ctx.strokeStyle = "#444";
-  for (let i = 0; i <= 10; i++) {
-    ctx.beginPath();
-    ctx.moveTo(i * 30, 0);
-    ctx.lineTo(i * 30, 300);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(0, i * 30);
-    ctx.lineTo(300, i * 30);
-    ctx.stroke();
+function updateTimerDisplay() {
+  if (remainingMs <= 0) {
+    timerDisplay.textContent = "00:00";
+    timerDisplay.style.color = "white";
+    return;
   }
 
-  ctx.fillStyle = "lime";
-  ctx.beginPath();
-  ctx.arc(150, 150, 6, 0, Math.PI * 2);
-  ctx.fill();
+  const min = Math.floor(remainingMs / 60000);
+  const sec = Math.floor((remainingMs % 60000) / 1000);
+  const cs  = Math.floor((remainingMs % 1000) / 10);
+
+  if (remainingMs > 3 * 60000) {
+    timerDisplay.textContent =
+      `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    timerDisplay.style.color = "white";
+  } else {
+    timerDisplay.textContent =
+      `${String(min).padStart(2, "0")}:` +
+      `${String(sec).padStart(2, "0")}:` +
+      `${String(cs).padStart(2, "0")}`;
+    timerDisplay.style.color = "red";
+  }
 }
 
-/* ===== 起動時 ===== */
+function tick(now) {
+  if (!timerRunning) return;
+
+  const elapsed = now - startTime;
+  remainingMs = Math.max(gameTimeMs - elapsed, 0);
+  updateTimerDisplay();
+
+  if (remainingMs === 0) {
+    stopTimer();
+    return;
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+function startTimer() {
+  if (timerRunning) return;
+  timerRunning = true;
+  startTime = performance.now() - (gameTimeMs - remainingMs);
+  rafId = requestAnimationFrame(tick);
+}
+
+function stopTimer() {
+  timerRunning = false;
+  cancelAnimationFrame(rafId);
+}
+
+/* ===== 初期表示 ===== */
 remainingMs = 0;
 updateTimerDisplay();
+
+/* ===== 仮マップ描画 ===== */
+const ctx = $("map").getContext("2d");
+ctx.strokeStyle = "#555";
+for (let i = 0; i <= 300; i += 50) {
+  ctx.beginPath();
+  ctx.moveTo(i, 0);
+  ctx.lineTo(i, 300);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, i);
+  ctx.lineTo(300, i);
+  ctx.stroke();
+}
 </script>
+
+</body>
+</html>

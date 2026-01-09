@@ -2,131 +2,156 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+
+<!-- スマホ向け表示設定 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
 <title>Field Timer</title>
 
 <style>
-  body {
-    margin: 0;
-    font-family: "JetBrains Mono", "Source Code Pro", monospace;
-    background: #111;
-    color: #eee;
-    text-align: center;
-  }
+/* ================================
+   全体設定
+================================ */
+body {
+  margin: 0;
+  background: #111;
+  color: #eee;
+  text-align: center;
+  font-family: "JetBrains Mono", "Source Code Pro", monospace; /* ← フォント固定 */
+}
 
-  .screen {
-    display: none;
-    padding: 10px;
-  }
+/* 画面切り替え用 */
+.screen {
+  display: none;
+  padding: 10px;
+}
+.active {
+  display: block;
+}
 
-  .active {
-    display: block;
-  }
+/* ================================
+   メイン画面
+================================ */
+.version {
+  font-size: 14px;
+  color: #aaa;
+}
 
-  h1 {
-    margin: 10px 0;
-  }
+/* ================================
+   タイマー表示
+================================ */
+#timer {
+  font-size: 48px;
+  margin: 15px auto;
+  width: 280px;                 /* ← 表示ズレ防止 */
+  font-variant-numeric: slashed-zero; /* 斜線入り0 */
+}
 
-  .version {
-    font-size: 14px;
-    color: #aaa;
-  }
+/* 3分以下で赤 */
+.red {
+  color: #ff4444;
+}
 
-  /* ===== タイマー表示 ===== */
-  #timer {
-    font-size: 48px;
-    margin: 15px 0;
-    font-variant-numeric: slashed-zero;
-    width: 280px;
-    margin-left: auto;
-    margin-right: auto;
-  }
+/* 30秒以下で点滅 */
+.blink {
+  animation: blink 0.4s steps(1) infinite;
+}
 
-  .red {
-    color: #ff4444;
-  }
+/* 点滅アニメーション */
+@keyframes blink {
+  50% { opacity: 0; }
+}
 
-  .blink {
-    animation: blink 0.4s steps(1) infinite;
-  }
+/* ================================
+   擬似マップ
+================================ */
+#map {
+  width: 300px;
+  height: 300px;
+  margin: 10px auto;
+  background: #222;
+  border: 2px solid #555;
+  position: relative;
+}
 
-  @keyframes blink {
-    50% { opacity: 0; }
-  }
+.grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-size: 30px 30px;
+  background-image:
+    linear-gradient(to right, #333 1px, transparent 1px),
+    linear-gradient(to bottom, #333 1px, transparent 1px);
+}
 
-  /* ===== 擬似マップ ===== */
-  #map {
-    width: 300px;
-    height: 300px;
-    margin: 10px auto;
-    background: #222;
-    border: 2px solid #555;
-    position: relative;
-  }
+/* 自分の位置（仮） */
+.player {
+  width: 10px;
+  height: 10px;
+  background: #4af;
+  border-radius: 50%;
+  position: absolute;
+  top: 145px;
+  left: 145px;
+}
 
-  .grid {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-size: 30px 30px;
-    background-image:
-      linear-gradient(to right, #333 1px, transparent 1px),
-      linear-gradient(to bottom, #333 1px, transparent 1px);
-  }
-
-  .player {
-    width: 10px;
-    height: 10px;
-    background: #4af;
-    border-radius: 50%;
-    position: absolute;
-    top: 145px;
-    left: 145px;
-  }
-
-  button {
-    font-size: 16px;
-    margin: 5px;
-    padding: 8px 14px;
-  }
+/* ================================
+   ボタン
+================================ */
+button {
+  font-size: 16px;
+  padding: 8px 14px;
+  margin: 5px;
+}
 </style>
 </head>
 
 <body>
 
-<!-- ===== メイン画面 ===== -->
+<!-- ==============================
+     メイン画面
+================================ -->
 <div id="main" class="screen active">
   <h1>Field Map</h1>
-  <!--ヴァージョン-->
-  <div class="version">Version 0.2</div>
+  <div class="version">Version 0.0</div>
   <button onclick="openField()">START</button>
 </div>
 
-<!-- ===== フィールド画面 ===== -->
+<!-- ==============================
+     フィールド画面
+================================ -->
 <div id="field" class="screen">
+  <!-- タイマー表示 -->
   <div id="timer">00:00</div>
 
+  <!-- 擬似マップ -->
   <div id="map">
     <div class="grid"></div>
     <div class="player"></div>
   </div>
 
+  <!-- 操作ボタン -->
   <button onclick="toggleStart()">START / STOP</button>
   <button onclick="resetTimer()">RESET</button>
   <button onclick="scan()">SCAN</button>
   <button onclick="openSettings()">SETTINGS</button>
 </div>
 
-<!-- ===== 設定画面 ===== -->
+<!-- ==============================
+     設定画面
+================================ -->
 <div id="settings" class="screen">
   <h2>Settings</h2>
   <button onclick="openTimerSet()">タイマーセット</button><br>
   <button onclick="backToMain()">メイン画面に戻る</button>
 </div>
 
-<!-- ===== タイマー設定 ===== -->
+<!-- ==============================
+     タイマー設定画面
+================================ -->
 <div id="timerSet" class="screen">
   <h2>Timer Set (min)</h2>
+  <!-- 初期値は0分 -->
   <input id="minuteInput" type="number" min="0" value="0">
   <br><br>
   <button onclick="setTimer()">決定</button>
@@ -134,97 +159,134 @@
 </div>
 
 <script>
-  let setTimeMs = 0;
-  let remainingMs = 0;
-  let running = false;
-  let timerInterval = null;
+/* ================================
+   タイマー関連変数
+================================ */
+// 設定された時間（ms）
+let setTimeMs = 0;
 
-  let startTimestamp = 0;
-  let lastRemainingMs = 0;
+// 残り時間（ms）
+let remainingMs = 0;
 
-  function show(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-  }
+// タイマー状態
+let running = false;
 
-  function openField() { show('field'); updateDisplay(); }
-  function openSettings() { show('settings'); }
-  function backToMain() { show('main'); }
-  function openTimerSet() { show('timerSet'); }
+// setInterval管理
+let timerInterval = null;
 
-  function setTimer() {
-    const min = Number(document.getElementById('minuteInput').value);
-    setTimeMs = min * 60 * 1000;
-    remainingMs = setTimeMs;
-    updateDisplay();
-    show('field');
-  }
+// 実時間計測用
+let startTimestamp = 0;
+let lastRemainingMs = 0;
 
-  function toggleStart() {
-    if (!running) {
-      if (remainingMs <= 0) remainingMs = setTimeMs;
+/* ================================
+   画面切り替え
+================================ */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
 
-      running = true;
-      startTimestamp = performance.now();
-      lastRemainingMs = remainingMs;
+function openField() { show('field'); updateDisplay(); }
+function openSettings() { show('settings'); }
+function backToMain() { show('main'); }
+function openTimerSet() { show('timerSet'); }
 
-      timerInterval = setInterval(() => {
-        const now = performance.now();
-        const elapsed = now - startTimestamp;
-        remainingMs = Math.max(0, lastRemainingMs - elapsed);
-
-        if (remainingMs === 0) stopTimer();
-        updateDisplay();
-      }, 50);
-    } else {
-      stopTimer();
-    }
-  }
-
-  function stopTimer() {
-    running = false;
-    clearInterval(timerInterval);
-  }
-
-  function resetTimer() {
-    stopTimer();
-    remainingMs = setTimeMs;
-    updateDisplay();
-  }
-
-  function scan() {
-    alert("GPS Scan (仮)");
-  }
-
-  function updateDisplay() {
-    const t = document.getElementById('timer');
-    let ms = remainingMs;
-
-    t.classList.remove('red', 'blink');
-
-    if (ms <= 180000) t.classList.add('red');
-    if (ms <= 30000) t.classList.add('blink');
-
-    if (ms > 180000) {
-      const m = Math.floor(ms / 60000);
-      const s = Math.floor((ms % 60000) / 1000);
-      t.textContent =
-        String(m).padStart(2, '0') + ":" +
-        String(s).padStart(2, '0');
-    } else {
-      const m = Math.floor(ms / 60000);
-      const s = Math.floor((ms % 60000) / 1000);
-      const cs = Math.floor((ms % 1000) / 10);
-      t.textContent =
-        String(m).padStart(2, '0') + ":" +
-        String(s).padStart(2, '0') + ":" +
-        String(cs).padStart(2, '0');
-    }
-
-    if (setTimeMs === 0 && !running) t.textContent = "00:00";
-  }
-
+/* ================================
+   タイマー設定
+================================ */
+function setTimer() {
+  const min = Number(document.getElementById('minuteInput').value);
+  setTimeMs = min * 60 * 1000;
+  remainingMs = setTimeMs;
   updateDisplay();
+  show('field');
+}
+
+/* ================================
+   タイマー開始 / 停止
+================================ */
+function toggleStart() {
+  if (!running) {
+    if (remainingMs <= 0) remainingMs = setTimeMs;
+
+    running = true;
+    startTimestamp = performance.now();
+    lastRemainingMs = remainingMs;
+
+    timerInterval = setInterval(() => {
+      const now = performance.now();
+      const elapsed = now - startTimestamp;
+      remainingMs = Math.max(0, lastRemainingMs - elapsed);
+
+      if (remainingMs === 0) stopTimer();
+      updateDisplay();
+    }, 50);
+  } else {
+    stopTimer();
+  }
+}
+
+/* 停止処理 */
+function stopTimer() {
+  running = false;
+  clearInterval(timerInterval);
+}
+
+/* リセット（設定時間に戻す） */
+function resetTimer() {
+  stopTimer();
+  remainingMs = setTimeMs;
+  updateDisplay();
+}
+
+/* 仮GPSスキャン */
+function scan() {
+  alert("GPS Scan（仮）");
+}
+
+/* ================================
+   タイマー表示更新
+================================ */
+function updateDisplay() {
+  const t = document.getElementById('timer');
+  let ms = remainingMs;
+
+  // 初期化（起動時・停止時は白で点滅なし）
+  t.classList.remove('red', 'blink');
+
+  // ★ タイマーが動いている時だけ警告表示
+  if (running) {
+    if (ms <= 180000) t.classList.add('red');     // 3分以下で赤
+    if (ms <= 30000)  t.classList.add('blink');  // 30秒以下で点滅
+  }
+
+  // 表示形式切り替え
+  if (ms > 180000) {
+    // 3分より多い → 分:秒
+    const m = Math.floor(ms / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    t.textContent =
+      String(m).padStart(2, '0') + ":" +
+      String(s).padStart(2, '0');
+  } else {
+    // 3分以下 → 分:秒:小数
+    const m = Math.floor(ms / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    const cs = Math.floor((ms % 1000) / 10);
+    t.textContent =
+      String(m).padStart(2, '0') + ":" +
+      String(s).padStart(2, '0') + ":" +
+      String(cs).padStart(2, '0');
+  }
+
+  // 起動直後表示
+  if (setTimeMs === 0 && !running) {
+    t.textContent = "00:00";
+  }
+}
+
+// 初期表示
+updateDisplay();
 </script>
 
 </body>

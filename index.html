@@ -1,161 +1,151 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>TEST FIELD ALPHA</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      margin: 0;
-      background: #111;
-      color: #fff;
-      font-family: system-ui, sans-serif;
-      text-align: center;
-    }
-    h1 {
-      margin: 12px 0 6px;
-      font-size: 22px;
-      letter-spacing: 1px;
-    }
-    canvas {
-      background: #222;
-      border: 2px solid #555;
-      display: block;
-      margin: 0 auto;
-    }
-    button {
-      margin: 12px;
-      padding: 10px 24px;
-      font-size: 18px;
-      border-radius: 20px;
-      border: none;
-    }
-    #info {
-      font-size: 14px;
-      margin-bottom: 12px;
-      word-break: break-all;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field GPS Tool</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: sans-serif;
+    background: #111;
+    color: #fff;
+    text-align: center;
+  }
+
+  .screen {
+    display: none;
+    padding: 20px;
+  }
+
+  .active {
+    display: block;
+  }
+
+  button {
+    font-size: 18px;
+    padding: 12px 20px;
+    margin: 8px;
+  }
+
+  #map {
+    width: 90vw;
+    height: 50vh;
+    background: #333;
+    margin: 10px auto;
+  }
+</style>
 </head>
+
 <body>
 
-<h1>TEST FIELD ALPHA</h1>
+<!-- ===== メイン画面 ===== -->
+<div id="mainScreen" class="screen active">
+  <h1>フィールド選択</h1>
 
-<canvas id="map" width="360" height="360"></canvas>
+  <select id="fieldSelect">
+    <option value="fieldA">フィールドA</option>
+    <option value="fieldB">フィールドB</option>
+  </select>
 
-<button onclick="scan()">📡 スキャン</button>
+  <br><br>
+  <button onclick="goToField()">開始</button>
+</div>
 
-<div id="info">未取得</div>
+<!-- ===== フィールド画面 ===== -->
+<div id="fieldScreen" class="screen">
+  <h2 id="fieldName">フィールド</h2>
+
+  <div id="map">MAP</div>
+
+  <div>
+    <button onclick="startStop()">スタート / ストップ</button>
+    <button onclick="scanGPS()">スキャン</button>
+    <button onclick="resetTimer()">タイマーリセット</button>
+    <button onclick="openSettings()">設定</button>
+  </div>
+
+  <p id="timer">00:00</p>
+  <p id="gps">GPS: ---</p>
+</div>
+
+<!-- ===== 設定画面 ===== -->
+<div id="settingsScreen" class="screen">
+  <h2>設定</h2>
+
+  <button onclick="backToMain()">メイン画面へ戻る</button>
+</div>
 
 <script>
-const canvas = document.getElementById("map");
-const ctx = canvas.getContext("2d");
+  const mainScreen = document.getElementById("mainScreen");
+  const fieldScreen = document.getElementById("fieldScreen");
+  const settingsScreen = document.getElementById("settingsScreen");
 
-// ===== マップ設定 =====
-const MAP_SIZE = 50000; // 50km 四方（m）
-const HALF_MAP = MAP_SIZE / 2;
-const CANVAS_SIZE = canvas.width;
+  const fieldName = document.getElementById("fieldName");
+  const gpsText = document.getElementById("gps");
+  const timerText = document.getElementById("timer");
 
-// ===== 現在地をマップ中央にする基準座標 =====
-let centerLat = null;
-let centerLon = null;
+  let timerInterval = null;
+  let seconds = 0;
 
-// ===== マップ描画 =====
-function drawMap() {
-  ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  function showScreen(screen) {
+    mainScreen.classList.remove("active");
+    fieldScreen.classList.remove("active");
+    settingsScreen.classList.remove("active");
+    screen.classList.add("active");
+  }
 
-  // 外枠
-  ctx.strokeStyle = "#888";
-  ctx.strokeRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  function goToField() {
+    const field = document.getElementById("fieldSelect").value;
+    fieldName.textContent = field;
+    showScreen(fieldScreen);
+  }
 
-  // エリア例（スケール拡張）
-  drawRect(-20000, -20000, 15000, 15000, "#2fbf2f"); // 市街地
-  drawRect(-20000, 5000, 15000, 15000, "#256b25");  // 山岳
-  drawRect(5000, -20000, 15000, 15000, "#444");    // 平原
+  function openSettings() {
+    showScreen(settingsScreen);
+  }
 
-  // 中央拠点
-  drawCircle(0, 0, 1200, "#666");
-}
+  function backToMain() {
+    showScreen(mainScreen);
+  }
 
-function worldToCanvas(x, y) {
-  return {
-    x: (x + HALF_MAP) / MAP_SIZE * CANVAS_SIZE,
-    y: CANVAS_SIZE - (y + HALF_MAP) / MAP_SIZE * CANVAS_SIZE
-  };
-}
-
-function drawRect(x, y, w, h, color) {
-  const p = worldToCanvas(x, y + h);
-  ctx.fillStyle = color;
-  ctx.fillRect(
-    p.x,
-    p.y,
-    w / MAP_SIZE * CANVAS_SIZE,
-    h / MAP_SIZE * CANVAS_SIZE
-  );
-}
-
-function drawCircle(x, y, r, color) {
-  const p = worldToCanvas(x, y);
-  ctx.beginPath();
-  ctx.arc(
-    p.x,
-    p.y,
-    r / MAP_SIZE * CANVAS_SIZE,
-    0, Math.PI * 2
-  );
-  ctx.fillStyle = color;
-  ctx.fill();
-}
-
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
-}
-
-// ===== GPS取得 =====
-function scan() {
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-
-      if (centerLat === null) {
-        centerLat = lat;
-        centerLon = lon;
-      }
-
-      // 緯度経度 → メートル
-      const dx = (lon - centerLon) * Math.cos(centerLat * Math.PI / 180) * 111000;
-      const dy = (lat - centerLat) * 111000;
-
-      let x = clamp(dx, -HALF_MAP, HALF_MAP);
-      let y = clamp(dy, -HALF_MAP, HALF_MAP);
-
-      drawMap();
-      drawPlayer(x, y);
-
-      document.getElementById("info").innerText =
-        `lat:${lat.toFixed(6)} lon:${lon.toFixed(6)} | x:${x.toFixed(1)}m y:${y.toFixed(1)}m`;
-    },
-    () => alert("GPS取得失敗"),
-    {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 10000
+  function startStop() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    } else {
+      timerInterval = setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
+        timerText.textContent = `${m}:${s}`;
+      }, 1000);
     }
-  );
-}
+  }
 
-function drawPlayer(x, y) {
-  const p = worldToCanvas(x, y);
-  ctx.beginPath();
-  ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-  ctx.fillStyle = "red";
-  ctx.fill();
-}
+  function resetTimer() {
+    seconds = 0;
+    timerText.textContent = "00:00";
+  }
 
-// 初期描画
-drawMap();
+  function scanGPS() {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lon = pos.coords.longitude.toFixed(6);
+        gpsText.textContent = `GPS: ${lat}, ${lon}`;
+      },
+      err => {
+        gpsText.textContent = "GPS取得失敗";
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 60000
+      }
+    );
+  }
 </script>
 
 </body>

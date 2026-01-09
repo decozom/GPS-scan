@@ -30,15 +30,19 @@
   }
 
   #timerDisplay {
-    font-size: 48px;
-    margin: 20px 0;
-    font-weight: bold;
-    font-family: system-ui, sans-serif; /* 固定 */
-    font-variant-numeric: tabular-nums;
-    width: 8ch;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
+  font-size: 48px;
+  margin: 20px 0;
+  font-weight: bold;
+
+  /* ===== 斜線入り0を保証するフォント指定 ===== */
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+
+  width: 8ch;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
   }
 
   canvas {

@@ -3,45 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Field GPS Tool</title>
+<title>GPSフィールドマップ</title>
 
 <style>
-  body {
-    margin: 0;
-    font-family: sans-serif;
-    background: #111;
-    color: #fff;
-    text-align: center;
-  }
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #fff;
+  text-align: center;
+}
 
-  .screen {
-    display: none;
-    padding: 20px;
-  }
+.screen {
+  display: none;
+  padding: 20px;
+}
 
-  .active {
-    display: block;
-  }
+.active {
+  display: block;
+}
 
-  button {
-    font-size: 18px;
-    padding: 12px 20px;
-    margin: 8px;
-  }
+button {
+  font-size: 18px;
+  padding: 10px 20px;
+  margin: 8px;
+}
 
-  #map {
-    width: 90vw;
-    height: 50vh;
-    background: #333;
-    margin: 10px auto;
-  }
-
-  input {
-    font-size: 18px;
-    padding: 8px;
-    width: 80px;
-    text-align: center;
-  }
+canvas {
+  background: #222;
+  margin-top: 10px;
+  border: 1px solid #555;
+}
 </style>
 </head>
 
@@ -49,156 +41,147 @@
 
 <!-- ===== メイン画面 ===== -->
 <div id="mainScreen" class="screen active">
-  <h1>フィールド選択</h1>
-
-  <select id="fieldSelect">
-    <option value="フィールドA">フィールドA</option>
-    <option value="フィールドB">フィールドB</option>
-  </select>
-
-  <br><br>
-  <button onclick="goToField()">開始</button>
+  <h1>FIELD MAP</h1>
+  <button onclick="startGame()">フィールド開始</button>
 </div>
 
 <!-- ===== フィールド画面 ===== -->
 <div id="fieldScreen" class="screen">
-  <h2 id="fieldName">フィールド</h2>
+  <h2 id="timerDisplay">00:00</h2>
 
-  <div id="map">MAP</div>
+  <canvas id="map" width="300" height="300"></canvas>
 
   <div>
-    <button onclick="startStop()">スタート / ストップ</button>
-    <button onclick="scanGPS()">スキャン</button>
+    <button onclick="toggleTimer()">スタート / ストップ</button>
     <button onclick="openSettings()">設定</button>
   </div>
-
-  <h2 id="timer">00:00</h2>
-  <p id="gps">GPS: ---</p>
 </div>
 
 <!-- ===== 設定画面 ===== -->
 <div id="settingsScreen" class="screen">
   <h2>設定</h2>
-
-  <button onclick="openTimerSetting()">タイマー設定</button>
-  <br>
-  <button onclick="backToMain()">タイトルへ戻る</button>
+  <button onclick="backToMain()">メイン画面に戻る</button><br>
+  <button onclick="openTimerSetting()">タイマーセット</button>
 </div>
 
 <!-- ===== タイマー設定画面 ===== -->
 <div id="timerSettingScreen" class="screen">
-  <h2>ゲーム時間設定</h2>
-
-  <p>
-    <input type="number" id="gameMinutes" min="1" value="30"> 分
-  </p>
-
+  <h2>タイマー設定</h2>
+  <input type="number" id="gameMinutes" min="1" value="10"> 分<br><br>
   <button onclick="saveTimer()">保存</button>
 </div>
 
 <script>
-  const mainScreen = document.getElementById("mainScreen");
-  const fieldScreen = document.getElementById("fieldScreen");
-  const settingsScreen = document.getElementById("settingsScreen");
-  const timerSettingScreen = document.getElementById("timerSettingScreen");
+/* ===== 画面管理 ===== */
+const mainScreen = document.getElementById("mainScreen");
+const fieldScreen = document.getElementById("fieldScreen");
+const settingsScreen = document.getElementById("settingsScreen");
+const timerSettingScreen = document.getElementById("timerSettingScreen");
 
-  const fieldName = document.getElementById("fieldName");
-  const timerText = document.getElementById("timer");
-  const gpsText = document.getElementById("gps");
+function showScreen(screen) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  screen.classList.add("active");
+}
 
-  let timerInterval = null;
-  let remainingSeconds = 0;
-  let gameTimeSeconds = 30 * 60;
+/* ===== タイマー ===== */
+let gameTimeSeconds = 600;
+let remainingSeconds = gameTimeSeconds;
+let timerRunning = false;
+let timerInterval = null;
 
-  function showScreen(screen) {
-    [mainScreen, fieldScreen, settingsScreen, timerSettingScreen]
-      .forEach(s => s.classList.remove("active"));
-    screen.classList.add("active");
-  }
+const timerDisplay = document.getElementById("timerDisplay");
 
-  function goToField() {
-    const field = document.getElementById("fieldSelect").value;
-    fieldName.textContent = field;
-    resetTimerDisplay();
-    showScreen(fieldScreen);
-  }
+function updateTimerDisplay() {
+  const min = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
+  const sec = String(remainingSeconds % 60).padStart(2, "0");
+  timerDisplay.textContent = `${min}:${sec}`;
+}
 
-  function openSettings() {
-    showScreen(settingsScreen);
-  }
-
-  function openTimerSetting() {
-    document.getElementById("gameMinutes").value = gameTimeSeconds / 60;
-    showScreen(timerSettingScreen);
-  }
-
-  function backToMain() {
+function toggleTimer() {
+  if (timerRunning) {
     stopTimer();
-    showScreen(mainScreen);
+  } else {
+    startTimer();
   }
+}
 
-  function saveTimer() {
-    const minutes = parseInt(document.getElementById("gameMinutes").value);
-    if (minutes > 0) {
-      gameTimeSeconds = minutes * 60;
-      resetTimerDisplay();
-    }
-    showScreen(fieldScreen);
-  }
+function startTimer() {
+  if (timerRunning) return;
+  timerRunning = true;
 
-  function startStop() {
-    if (timerInterval) {
-      stopTimer();
+  timerInterval = setInterval(() => {
+    if (remainingSeconds > 0) {
+      remainingSeconds--;
+      updateTimerDisplay();
     } else {
-      if (remainingSeconds <= 0) {
-        remainingSeconds = gameTimeSeconds;
-      }
-      timerInterval = setInterval(() => {
-        remainingSeconds--;
-        updateTimerText();
-        if (remainingSeconds <= 0) {
-          stopTimer();
-        }
-      }, 1000);
+      stopTimer();
     }
+  }, 1000);
+}
+
+function stopTimer() {
+  timerRunning = false;
+  clearInterval(timerInterval);
+}
+
+/* ===== 画面遷移 ===== */
+function startGame() {
+  remainingSeconds = gameTimeSeconds;
+  updateTimerDisplay();
+  showScreen(fieldScreen);
+  drawMap();
+}
+
+function openSettings() {
+  stopTimer();
+  showScreen(settingsScreen);
+}
+
+function backToMain() {
+  stopTimer();
+  showScreen(mainScreen);
+}
+
+function openTimerSetting() {
+  document.getElementById("gameMinutes").value = gameTimeSeconds / 60;
+  showScreen(timerSettingScreen);
+}
+
+function saveTimer() {
+  const min = Number(document.getElementById("gameMinutes").value);
+  gameTimeSeconds = min * 60;
+  remainingSeconds = gameTimeSeconds;
+  updateTimerDisplay();
+  showScreen(fieldScreen);
+}
+
+/* ===== マップ描画 ===== */
+function drawMap() {
+  const canvas = document.getElementById("map");
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // グリッド
+  ctx.strokeStyle = "#444";
+  for (let i = 0; i <= 10; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * 30, 0);
+    ctx.lineTo(i * 30, 300);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, i * 30);
+    ctx.lineTo(300, i * 30);
+    ctx.stroke();
   }
 
-  function stopTimer() {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-
-  function resetTimerDisplay() {
-    remainingSeconds = gameTimeSeconds;
-    updateTimerText();
-  }
-
-  function updateTimerText() {
-    const m = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
-    const s = String(remainingSeconds % 60).padStart(2, "0");
-    timerText.textContent = `${m}:${s}`;
-  }
-
-  function scanGPS() {
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const lat = pos.coords.latitude.toFixed(6);
-        const lon = pos.coords.longitude.toFixed(6);
-        gpsText.textContent = `GPS: ${lat}, ${lon}`;
-      },
-      () => {
-        gpsText.textContent = "GPS取得失敗";
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 60000
-      }
-    );
-  }
-
-  // 初期表示
-  resetTimerDisplay();
+  // 自分の位置（仮）
+  ctx.fillStyle = "lime";
+  ctx.beginPath();
+  ctx.arc(150, 150, 6, 0, Math.PI * 2);
+  ctx.fill();
+}
 </script>
 
 </body>

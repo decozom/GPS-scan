@@ -34,6 +34,11 @@ canvas {
   margin-top: 10px;
   border: 1px solid #555;
 }
+
+#timerDisplay {
+  font-size: 40px;
+  font-weight: bold;
+}
 </style>
 </head>
 
@@ -47,7 +52,7 @@ canvas {
 
 <!-- ===== フィールド画面 ===== -->
 <div id="fieldScreen" class="screen">
-  <h2 id="timerDisplay">00:00</h2>
+  <div id="timerDisplay">00:00.0</div>
 
   <canvas id="map" width="300" height="300"></canvas>
 
@@ -77,32 +82,38 @@ const mainScreen = document.getElementById("mainScreen");
 const fieldScreen = document.getElementById("fieldScreen");
 const settingsScreen = document.getElementById("settingsScreen");
 const timerSettingScreen = document.getElementById("timerSettingScreen");
+const timerDisplay = document.getElementById("timerDisplay");
 
 function showScreen(screen) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
 }
 
-/* ===== タイマー ===== */
-let gameTimeSeconds = 600;
-let remainingSeconds = gameTimeSeconds;
+/* ===== タイマー（ミリ秒管理） ===== */
+let gameTimeMs = 10 * 60 * 1000;
+let remainingMs = gameTimeMs;
 let timerRunning = false;
 let timerInterval = null;
 
-const timerDisplay = document.getElementById("timerDisplay");
-
 function updateTimerDisplay() {
-  const min = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
-  const sec = String(remainingSeconds % 60).padStart(2, "0");
-  timerDisplay.textContent = `${min}:${sec}`;
+  const totalSeconds = remainingMs / 1000;
+  const min = Math.floor(totalSeconds / 60);
+  const sec = Math.floor(totalSeconds % 60);
+  const dec = Math.floor((remainingMs % 1000) / 100); // 0.1秒
+
+  timerDisplay.textContent =
+    `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${dec}`;
+
+  // 残り3分で赤
+  if (remainingMs <= 180000) {
+    timerDisplay.style.color = "red";
+  } else {
+    timerDisplay.style.color = "white";
+  }
 }
 
 function toggleTimer() {
-  if (timerRunning) {
-    stopTimer();
-  } else {
-    startTimer();
-  }
+  timerRunning ? stopTimer() : startTimer();
 }
 
 function startTimer() {
@@ -110,13 +121,13 @@ function startTimer() {
   timerRunning = true;
 
   timerInterval = setInterval(() => {
-    if (remainingSeconds > 0) {
-      remainingSeconds--;
-      updateTimerDisplay();
-    } else {
+    remainingMs -= 100;
+    if (remainingMs <= 0) {
+      remainingMs = 0;
       stopTimer();
     }
-  }, 1000);
+    updateTimerDisplay();
+  }, 100);
 }
 
 function stopTimer() {
@@ -126,7 +137,7 @@ function stopTimer() {
 
 /* ===== 画面遷移 ===== */
 function startGame() {
-  remainingSeconds = gameTimeSeconds;
+  remainingMs = gameTimeMs;
   updateTimerDisplay();
   showScreen(fieldScreen);
   drawMap();
@@ -143,14 +154,14 @@ function backToMain() {
 }
 
 function openTimerSetting() {
-  document.getElementById("gameMinutes").value = gameTimeSeconds / 60;
+  document.getElementById("gameMinutes").value = gameTimeMs / 60000;
   showScreen(timerSettingScreen);
 }
 
 function saveTimer() {
   const min = Number(document.getElementById("gameMinutes").value);
-  gameTimeSeconds = min * 60;
-  remainingSeconds = gameTimeSeconds;
+  gameTimeMs = min * 60000;
+  remainingMs = gameTimeMs;
   updateTimerDisplay();
   showScreen(fieldScreen);
 }
@@ -162,7 +173,6 @@ function drawMap() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // グリッド
   ctx.strokeStyle = "#444";
   for (let i = 0; i <= 10; i++) {
     ctx.beginPath();

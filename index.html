@@ -1,82 +1,3 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GPSフィールドマップ</title>
-
-<style>
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #111;
-  color: #fff;
-  text-align: center;
-}
-
-.screen {
-  display: none;
-  padding: 20px;
-}
-
-.active {
-  display: block;
-}
-
-button {
-  font-size: 18px;
-  padding: 10px 20px;
-  margin: 8px;
-}
-
-canvas {
-  background: #222;
-  margin-top: 10px;
-  border: 1px solid #555;
-}
-
-#timerDisplay {
-  font-size: 40px;
-  font-weight: bold;
-  color: white;
-}
-</style>
-</head>
-
-<body>
-
-<!-- ===== メイン画面 ===== -->
-<div id="mainScreen" class="screen active">
-  <h1>FIELD MAP</h1>
-  <button onclick="startGame()">フィールド開始</button>
-</div>
-
-<!-- ===== フィールド画面 ===== -->
-<div id="fieldScreen" class="screen">
-  <div id="timerDisplay">00:00</div>
-
-  <canvas id="map" width="300" height="300"></canvas>
-
-  <div>
-    <button onclick="toggleTimer()">スタート / ストップ</button>
-    <button onclick="openSettings()">設定</button>
-  </div>
-</div>
-
-<!-- ===== 設定画面 ===== -->
-<div id="settingsScreen" class="screen">
-  <h2>設定</h2>
-  <button onclick="backToMain()">メイン画面に戻る</button><br>
-  <button onclick="openTimerSetting()">タイマーセット</button>
-</div>
-
-<!-- ===== タイマー設定画面 ===== -->
-<div id="timerSettingScreen" class="screen">
-  <h2>タイマー設定</h2>
-  <input type="number" id="gameMinutes" min="1" value="10"> 分<br><br>
-  <button onclick="saveTimer()">保存</button>
-</div>
-
 <script>
 /* ===== 画面管理 ===== */
 const mainScreen = document.getElementById("mainScreen");
@@ -93,9 +14,12 @@ function showScreen(screen) {
 /* ===== タイマー ===== */
 let gameTimeMs = 10 * 60 * 1000;
 let remainingMs = 0;
-let timerRunning = false;
-let timerInterval = null;
 
+let timerRunning = false;
+let startTimestamp = 0;
+let rafId = null;
+
+/* ---- 表示更新 ---- */
 function updateTimerDisplay() {
   if (remainingMs <= 0) {
     timerDisplay.textContent = "00:00";
@@ -107,19 +31,15 @@ function updateTimerDisplay() {
   const min = Math.floor(remainingMs / 60000);
   const sec = Math.floor((remainingMs % 60000) / 1000);
 
-  // 3分より多い → xx:xx
   if (remainingMs > 3 * 60 * 1000) {
     timerDisplay.textContent =
       `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-
     timerDisplay.style.color = "white";
     timerDisplay.style.textShadow = "none";
     return;
   }
 
-  // 3分以下 → xx:xx:xx（赤）
   const cs = Math.floor((remainingMs % 1000) / 10);
-
   timerDisplay.textContent =
     `${String(min).padStart(2, "0")}:` +
     `${String(sec).padStart(2, "0")}:` +
@@ -129,27 +49,39 @@ function updateTimerDisplay() {
   timerDisplay.style.textShadow = "0 0 8px red";
 }
 
-function toggleTimer() {
-  timerRunning ? stopTimer() : startTimer();
+/* ---- 実時間ベースカウント ---- */
+function tick() {
+  if (!timerRunning) return;
+
+  const now = Date.now();
+  const elapsed = now - startTimestamp;
+  remainingMs = Math.max(gameTimeMs - elapsed, 0);
+
+  updateTimerDisplay();
+
+  if (remainingMs === 0) {
+    stopTimer();
+    return;
+  }
+
+  rafId = requestAnimationFrame(tick);
 }
 
 function startTimer() {
   if (timerRunning) return;
-  timerRunning = true;
 
-  timerInterval = setInterval(() => {
-    remainingMs -= 10;
-    if (remainingMs <= 0) {
-      remainingMs = 0;
-      stopTimer();
-    }
-    updateTimerDisplay();
-  }, 10);
+  timerRunning = true;
+  startTimestamp = Date.now() + (gameTimeMs - remainingMs);
+  tick();
 }
 
 function stopTimer() {
   timerRunning = false;
-  clearInterval(timerInterval);
+  cancelAnimationFrame(rafId);
+}
+
+function toggleTimer() {
+  timerRunning ? stopTimer() : startTimer();
 }
 
 /* ===== 画面遷移 ===== */
@@ -167,6 +99,8 @@ function openSettings() {
 
 function backToMain() {
   stopTimer();
+  remainingMs = 0;
+  updateTimerDisplay();
   showScreen(mainScreen);
 }
 
@@ -183,11 +117,10 @@ function saveTimer() {
   showScreen(fieldScreen);
 }
 
-/* ===== マップ描画 ===== */
+/* ===== マップ ===== */
 function drawMap() {
   const canvas = document.getElementById("map");
   const ctx = canvas.getContext("2d");
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.strokeStyle = "#444";
@@ -208,7 +141,8 @@ function drawMap() {
   ctx.arc(150, 150, 6, 0, Math.PI * 2);
   ctx.fill();
 }
-</script>
 
-</body>
-</html>
+/* ===== 起動時 ===== */
+remainingMs = 0;
+updateTimerDisplay();
+</script>

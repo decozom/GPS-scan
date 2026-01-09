@@ -8,7 +8,7 @@
 <style>
   body {
     margin: 0;
-    font-family: system-ui, sans-serif;
+    font-family: system-ui, sans-serif; /* ← 固定 */
     background: #111;
     color: #fff;
     text-align: center;
@@ -26,16 +26,17 @@
   button {
     font-size: 18px;
     padding: 10px 20px;
-    margin: 8px;
+    margin: 6px;
   }
 
   #timerDisplay {
     font-size: 48px;
     margin: 20px 0;
     font-weight: bold;
-    
-    font-family: monospace;   /* ★ 等幅フォント */
-    width: 8ch;               /* ★ 最大文字数分を固定 */
+
+    font-family: system-ui, sans-serif; /* ← 今のフォントで固定 */
+    font-variant-numeric: tabular-nums;
+    width: 8ch;
     margin-left: auto;
     margin-right: auto;
     text-align: center;
@@ -44,11 +45,6 @@
   canvas {
     background: #222;
     border: 1px solid #555;
-  }
-
-  input {
-    font-size: 18px;
-    width: 80px;
   }
 </style>
 </head>
@@ -68,8 +64,10 @@
   <canvas id="map" width="300" height="300"></canvas>
 
   <div>
-    <button onclick="startTimer()">スタート</button>
-    <button onclick="stopTimer()">ストップ</button>
+    <button onclick="toggleTimer()" id="startStopBtn">スタート</button>
+    <button onclick="resetTimer()">リセット</button>
+    <button onclick="scanPosition()">スキャン</button>
+    <br>
     <button onclick="openSettings()">設定</button>
   </div>
 </div>
@@ -100,13 +98,14 @@ const fieldScreen = $("fieldScreen");
 const settingsScreen = $("settingsScreen");
 const timerSettingScreen = $("timerSettingScreen");
 const timerDisplay = $("timerDisplay");
+const startStopBtn = $("startStopBtn");
 
+/* ===== 画面遷移 ===== */
 function showScreen(screen) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
 }
 
-/* ===== 画面遷移 ===== */
 function openField() {
   showScreen(fieldScreen);
 }
@@ -182,21 +181,40 @@ function tick(now) {
 
 function startTimer() {
   if (timerRunning) return;
+  if (remainingMs <= 0) remainingMs = gameTimeMs;
+
   timerRunning = true;
   startTime = performance.now() - (gameTimeMs - remainingMs);
+  startStopBtn.textContent = "ストップ";
   rafId = requestAnimationFrame(tick);
 }
 
 function stopTimer() {
   timerRunning = false;
   cancelAnimationFrame(rafId);
+  startStopBtn.textContent = "スタート";
+}
+
+function toggleTimer() {
+  timerRunning ? stopTimer() : startTimer();
+}
+
+function resetTimer() {
+  stopTimer();
+  remainingMs = gameTimeMs;
+  updateTimerDisplay();
+}
+
+/* ===== スキャン（仮） ===== */
+function scanPosition() {
+  alert("スキャン実行（※ 今はダミー）");
 }
 
 /* ===== 初期表示 ===== */
 remainingMs = 0;
 updateTimerDisplay();
 
-/* ===== 仮マップ描画 ===== */
+/* ===== 仮マップ ===== */
 const ctx = $("map").getContext("2d");
 ctx.strokeStyle = "#555";
 for (let i = 0; i <= 300; i += 50) {

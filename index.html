@@ -53,7 +53,7 @@ canvas {
 
 <!-- ===== フィールド画面 ===== -->
 <div id="fieldScreen" class="screen">
-  <div id="timerDisplay">00:00.0</div>
+  <div id="timerDisplay">0:00.00</div>
 
   <canvas id="map" width="300" height="300"></canvas>
 
@@ -90,22 +90,33 @@ function showScreen(screen) {
   screen.classList.add("active");
 }
 
-/* ===== タイマー（ミリ秒管理） ===== */
+/* ===== タイマー ===== */
 let gameTimeMs = 10 * 60 * 1000;
-let remainingMs = gameTimeMs;
+let remainingMs = 0;
 let timerRunning = false;
 let timerInterval = null;
 
 function updateTimerDisplay() {
-  const totalSeconds = remainingMs / 1000;
-  const min = Math.floor(totalSeconds / 60);
-  const sec = Math.floor(totalSeconds % 60);
-  const dec = Math.floor((remainingMs % 1000) / 100);
+  let displayMs = remainingMs;
+
+  // 3分より多い時は 4:00 固定表示
+  if (remainingMs > 3 * 60 * 1000) {
+    timerDisplay.textContent = "4:00.00";
+    timerDisplay.style.color = "white";
+    timerDisplay.style.textShadow = "none";
+    return;
+  }
+
+  if (displayMs < 0) displayMs = 0;
+
+  const min = Math.floor(displayMs / 60000);
+  const sec = Math.floor((displayMs % 60000) / 1000);
+  const cs  = Math.floor((displayMs % 1000) / 10); // 1/100秒
 
   timerDisplay.textContent =
-    `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${dec}`;
+    `${min}:${String(sec).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
 
-  /* ★ 修正ここ ★ */
+  // 残り3分以下で赤
   if (remainingMs <= 3 * 60 * 1000) {
     timerDisplay.style.color = "red";
     timerDisplay.style.textShadow = "0 0 8px red";
@@ -124,13 +135,13 @@ function startTimer() {
   timerRunning = true;
 
   timerInterval = setInterval(() => {
-    remainingMs -= 100;
+    remainingMs -= 10;
     if (remainingMs <= 0) {
       remainingMs = 0;
       stopTimer();
     }
     updateTimerDisplay();
-  }, 100);
+  }, 10);
 }
 
 function stopTimer() {

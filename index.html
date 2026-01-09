@@ -8,7 +8,7 @@
 <style>
   body {
     margin: 0;
-    font-family: system-ui, sans-serif; /* ← 固定 */
+    font-family: system-ui, sans-serif; /* フォント固定 */
     background: #111;
     color: #fff;
     text-align: center;
@@ -33,8 +33,7 @@
     font-size: 48px;
     margin: 20px 0;
     font-weight: bold;
-
-    font-family: system-ui, sans-serif; /* ← 今のフォントで固定 */
+    font-family: system-ui, sans-serif; /* 固定 */
     font-variant-numeric: tabular-nums;
     width: 8ch;
     margin-left: auto;
@@ -46,6 +45,12 @@
     background: #222;
     border: 1px solid #555;
   }
+
+  #versionDisplay {
+    margin-top: 20px;
+    font-size: 14px;
+    opacity: 0.6;
+  }
 </style>
 </head>
 
@@ -55,6 +60,9 @@
 <div id="mainScreen" class="screen active">
   <h1>フィールド選択</h1>
   <button onclick="openField()">スタート</button>
+
+  <!-- バージョン表示 -->
+  <div id="versionDisplay">Ver.0.0</div>
 </div>
 
 <!-- ===== フィールド画面 ===== -->
@@ -88,6 +96,11 @@
 </div>
 
 <script>
+/* ===============================
+   アプリ設定
+=============================== */
+const APP_VERSION = "0.0";   // ← 次は 0.1 / 0.2 にここだけ変更
+
 /* ===== ユーティリティ ===== */
 function $(id) {
   return document.getElementById(id);
@@ -207,10 +220,11 @@ function resetTimer() {
 
 /* ===== スキャン（仮） ===== */
 function scanPosition() {
-  alert("スキャン実行（※ 今はダミー）");
+  alert("スキャン実行（※ GPS未実装）");
 }
 
-/* ===== 初期表示 ===== */
+/* ===== 初期化 ===== */
+$("versionDisplay").textContent = "Ver." + APP_VERSION;
 remainingMs = 0;
 updateTimerDisplay();
 

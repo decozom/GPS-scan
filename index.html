@@ -2,196 +2,228 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>Field Timer</title>
 
+<!-- フォント（斜線入り0） -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
+
 <style>
-body {
-  background: black;
-  color: white;
-  font-family: system-ui, sans-serif;
-  text-align: center;
+html, body {
   margin: 0;
   padding: 0;
+  background: #000;
+  color: #fff;
+  font-family: 'Roboto Mono', monospace;
+  height: 100%;
 }
 
-/* ===== 画面切り替え ===== */
-.screen {
-  display: none;
-}
-.screen.active {
-  display: block;
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ===== タイマー表示 ===== */
-#timerDisplay {
-  font-size: 48px;
-  margin: 20px 0;
-  font-weight: bold;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-variant-numeric: tabular-nums;
-  width: 10ch;
-  margin-left: auto;
-  margin-right: auto;
+/* ===== メイン画面 ===== */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#version {
+  text-align: right;
+  font-size: 12px;
+  padding: 4px 8px;
+  opacity: 0.6;
+}
+
+/* 擬似マップ */
+#map {
+  flex: 1;
+  margin: 8px;
+  border: 2px solid #444;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #222,
+      #222 10px,
+      #111 10px,
+      #111 20px
+    );
+}
+
+/* タイマー表示 */
+#timer {
   text-align: center;
+  font-size: 56px;
+  padding: 10px 0;
+  font-variant-numeric: slashed-zero;
+  white-space: nowrap;
+}
+
+/* 赤表示 */
+.red {
+  color: red;
 }
 
 /* 点滅 */
-@keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0.2; }
-  100% { opacity: 1; }
-}
 .blink {
-  animation: blink 1s infinite;
+  animation: blink 1s step-start infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
 }
 
 /* ボタン */
-button {
-  font-size: 16px;
-  margin: 5px;
-  padding: 10px 15px;
+#buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 8px;
 }
 
-#versionDisplay {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.6;
-  margin-top: 20px;
+button {
+  font-size: 16px;
+  padding: 14px;
+  background: #222;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+/* ===== 設定画面 ===== */
+#settings {
+  display: none;
+  flex: 1;
+  padding: 20px;
+}
+
+.settings-btn {
+  width: 100%;
+  margin-bottom: 12px;
 }
 </style>
 </head>
 
 <body>
+<div id="app">
 
-<!-- ===== メイン画面 ===== -->
-<div id="mainScreen" class="screen active">
-  <h2>フィールド選択</h2>
-  <button onclick="openField()">フィールドへ</button>
-  <div id="versionDisplay">v0.0</div>
-</div>
+  <!-- メイン画面 -->
+  <div id="main">
+    <div id="version">v0.0</div>
 
-<!-- ===== フィールド画面 ===== -->
-<div id="fieldScreen" class="screen">
-  <div id="timerDisplay">00:00</div>
+    <div id="map"></div>
 
-  <button onclick="toggleTimer()">スタート / ストップ</button>
-  <button onclick="resetTimer()">リセット</button>
-  <button onclick="scan()">スキャン</button>
-  <button onclick="openSettings()">設定</button>
-</div>
+    <div id="timer">00:00</div>
 
-<!-- ===== 設定画面 ===== -->
-<div id="settingScreen" class="screen">
-  <h3>設定</h3>
+    <div id="buttons">
+      <button onclick="toggleStart()">START</button>
+      <button onclick="resetTimer()">RESET</button>
+      <button onclick="scan()">SCAN</button>
+      <button onclick="openSettings()">SET</button>
+    </div>
+  </div>
 
-  <button onclick="openTimerSetting()">タイマーセット</button>
-  <br><br>
-  <button onclick="backToMain()">メイン画面に戻る</button>
-</div>
+  <!-- 設定画面 -->
+  <div id="settings">
+    <button class="settings-btn" onclick="backToMain()">メイン画面に戻る</button>
+    <button class="settings-btn" onclick="setTimer()">タイマーセット</button>
+  </div>
 
-<!-- ===== タイマー設定画面 ===== -->
-<div id="timerSettingScreen" class="screen">
-  <h3>タイマー設定（分）</h3>
-
-  <!-- ★ これが input。最初から value="0" -->
-  <input type="number" id="minuteInput" min="0" value="0">
-  <br><br>
-
-  <button onclick="setTimer()">設定</button>
-  <button onclick="openSettings()">戻る</button>
 </div>
 
 <script>
-let timerId = null;
+let timerInterval = null;
 let remainingMs = 0;
+let setTimeMs = 0;
 let running = false;
 
-/* ===== 画面切り替え ===== */
-function show(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(screenId).classList.add('active');
-}
+const timerEl = document.getElementById("timer");
 
-function openField() { show('fieldScreen'); }
-function openSettings() { show('settingScreen'); }
-function backToMain() { show('mainScreen'); }
-function openTimerSetting() { show('timerSettingScreen'); }
+function formatTime(ms) {
+  if (ms <= 0) return "00:00";
 
-/* ===== タイマー ===== */
-function toggleTimer() {
-  if (running) {
-    clearInterval(timerId);
-    running = false;
-    return;
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+
+  if (ms <= 180000) {
+    const cs = Math.floor((ms % 1000) / 10);
+    return `${String(min).padStart(2,"0")}:${String(sec).padStart(2,"0")}:${String(cs).padStart(2,"0")}`;
+  } else {
+    return `${String(min).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
   }
-  if (remainingMs <= 0) return;
-
-  running = true;
-  const start = Date.now();
-  const startRemain = remainingMs;
-
-  timerId = setInterval(() => {
-    remainingMs = startRemain - (Date.now() - start);
-    if (remainingMs <= 0) {
-      remainingMs = 0;
-      clearInterval(timerId);
-      running = false;
-    }
-    updateDisplay();
-  }, 50);
-}
-
-function resetTimer() {
-  clearInterval(timerId);
-  running = false;
-  remainingMs = 0;
-  updateDisplay();
-}
-
-function setTimer() {
-  const min = Number(document.getElementById('minuteInput').value);
-  remainingMs = min * 60 * 1000;
-  updateDisplay();
-  show('fieldScreen');
 }
 
 function updateDisplay() {
-  const d = document.getElementById('timerDisplay');
-  d.classList.remove('blink');
-  d.style.color = 'white';
+  timerEl.textContent = formatTime(remainingMs);
 
-  if (remainingMs <= 0) {
-    d.textContent = '00:00';
-    return;
+  timerEl.classList.remove("red","blink");
+
+  if (remainingMs <= 180000 && remainingMs > 0) {
+    timerEl.classList.add("red");
   }
-
-  const totalSec = remainingMs / 1000;
-  const min = Math.floor(totalSec / 60);
-  const sec = Math.floor(totalSec % 60);
-  const cs = Math.floor((remainingMs % 1000) / 10);
-
-  if (remainingMs <= 30000) {
-    d.style.color = 'red';
-    d.classList.add('blink');
+  if (remainingMs <= 30000 && remainingMs > 0) {
+    timerEl.classList.add("blink");
   }
+}
 
-  if (remainingMs <= 180000) {
-    d.textContent =
-      String(min).padStart(2, '0') + ':' +
-      String(sec).padStart(2, '0') + ':' +
-      String(cs).padStart(2, '0');
+function toggleStart() {
+  if (!running) {
+    if (remainingMs <= 0) remainingMs = setTimeMs;
+    running = true;
+    timerInterval = setInterval(() => {
+      remainingMs -= 10;
+      if (remainingMs <= 0) {
+        remainingMs = 0;
+        stopTimer();
+      }
+      updateDisplay();
+    }, 10);
   } else {
-    d.textContent =
-      String(min).padStart(2, '0') + ':' +
-      String(sec).padStart(2, '0');
+    stopTimer();
   }
 }
 
-/* ===== ダミー ===== */
-function scan() {
-  alert('スキャン（仮）');
+function stopTimer() {
+  running = false;
+  clearInterval(timerInterval);
 }
-</script>
 
+function resetTimer() {
+  stopTimer();
+  remainingMs = setTimeMs;
+  updateDisplay();
+}
+
+function scan() {
+  alert("SCAN（ダミー）");
+}
+
+function openSettings() {
+  document.getElementById("main").style.display = "none";
+  document.getElementById("settings").style.display = "block";
+}
+
+function backToMain() {
+  document.getElementById("settings").style.display = "none";
+  document.getElementById("main").style.display = "flex";
+}
+
+function setTimer() {
+  const min = prompt("分を入力（初期値0）", "0");
+  if (min === null) return;
+  const m = Math.max(0, parseInt(min) || 0);
+  setTimeMs = m * 60 * 1000;
+  remainingMs = setTimeMs;
+  updateDisplay();
+  backToMain();
+}
+
+updateDisplay();
+</script>
 </body>
 </html>

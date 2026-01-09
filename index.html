@@ -124,7 +124,7 @@ function openTimerSetting() {
 function saveTimer() {
   const min = Number($("gameMinutes").value);
   gameTimeMs = min * 60000;
-  remainingMs = 0;
+  remainingMs = gameTimeMs;
   updateTimerDisplay();
   showScreen(fieldScreen);
 }

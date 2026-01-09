@@ -35,6 +35,13 @@
     background: #333;
     margin: 10px auto;
   }
+
+  input {
+    font-size: 18px;
+    padding: 8px;
+    width: 80px;
+    text-align: center;
+  }
 </style>
 </head>
 
@@ -45,8 +52,8 @@
   <h1>フィールド選択</h1>
 
   <select id="fieldSelect">
-    <option value="fieldA">フィールドA</option>
-    <option value="fieldB">フィールドB</option>
+    <option value="フィールドA">フィールドA</option>
+    <option value="フィールドB">フィールドB</option>
   </select>
 
   <br><br>
@@ -62,11 +69,10 @@
   <div>
     <button onclick="startStop()">スタート / ストップ</button>
     <button onclick="scanGPS()">スキャン</button>
-    <button onclick="resetTimer()">タイマーリセット</button>
     <button onclick="openSettings()">設定</button>
   </div>
 
-  <p id="timer">00:00</p>
+  <h2 id="timer">00:00</h2>
   <p id="gps">GPS: ---</p>
 </div>
 
@@ -74,31 +80,46 @@
 <div id="settingsScreen" class="screen">
   <h2>設定</h2>
 
-  <button onclick="backToMain()">メイン画面へ戻る</button>
+  <button onclick="openTimerSetting()">タイマー設定</button>
+  <br>
+  <button onclick="backToMain()">タイトルへ戻る</button>
+</div>
+
+<!-- ===== タイマー設定画面 ===== -->
+<div id="timerSettingScreen" class="screen">
+  <h2>ゲーム時間設定</h2>
+
+  <p>
+    <input type="number" id="gameMinutes" min="1" value="30"> 分
+  </p>
+
+  <button onclick="saveTimer()">保存</button>
 </div>
 
 <script>
   const mainScreen = document.getElementById("mainScreen");
   const fieldScreen = document.getElementById("fieldScreen");
   const settingsScreen = document.getElementById("settingsScreen");
+  const timerSettingScreen = document.getElementById("timerSettingScreen");
 
   const fieldName = document.getElementById("fieldName");
-  const gpsText = document.getElementById("gps");
   const timerText = document.getElementById("timer");
+  const gpsText = document.getElementById("gps");
 
   let timerInterval = null;
-  let seconds = 0;
+  let remainingSeconds = 0;
+  let gameTimeSeconds = 30 * 60;
 
   function showScreen(screen) {
-    mainScreen.classList.remove("active");
-    fieldScreen.classList.remove("active");
-    settingsScreen.classList.remove("active");
+    [mainScreen, fieldScreen, settingsScreen, timerSettingScreen]
+      .forEach(s => s.classList.remove("active"));
     screen.classList.add("active");
   }
 
   function goToField() {
     const field = document.getElementById("fieldSelect").value;
     fieldName.textContent = field;
+    resetTimerDisplay();
     showScreen(fieldScreen);
   }
 
@@ -106,27 +127,56 @@
     showScreen(settingsScreen);
   }
 
+  function openTimerSetting() {
+    document.getElementById("gameMinutes").value = gameTimeSeconds / 60;
+    showScreen(timerSettingScreen);
+  }
+
   function backToMain() {
+    stopTimer();
     showScreen(mainScreen);
+  }
+
+  function saveTimer() {
+    const minutes = parseInt(document.getElementById("gameMinutes").value);
+    if (minutes > 0) {
+      gameTimeSeconds = minutes * 60;
+      resetTimerDisplay();
+    }
+    showScreen(fieldScreen);
   }
 
   function startStop() {
     if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
+      stopTimer();
     } else {
+      if (remainingSeconds <= 0) {
+        remainingSeconds = gameTimeSeconds;
+      }
       timerInterval = setInterval(() => {
-        seconds++;
-        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-        const s = String(seconds % 60).padStart(2, "0");
-        timerText.textContent = `${m}:${s}`;
+        remainingSeconds--;
+        updateTimerText();
+        if (remainingSeconds <= 0) {
+          stopTimer();
+        }
       }, 1000);
     }
   }
 
-  function resetTimer() {
-    seconds = 0;
-    timerText.textContent = "00:00";
+  function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  function resetTimerDisplay() {
+    remainingSeconds = gameTimeSeconds;
+    updateTimerText();
+  }
+
+  function updateTimerText() {
+    const m = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
+    const s = String(remainingSeconds % 60).padStart(2, "0");
+    timerText.textContent = `${m}:${s}`;
   }
 
   function scanGPS() {
@@ -136,7 +186,7 @@
         const lon = pos.coords.longitude.toFixed(6);
         gpsText.textContent = `GPS: ${lat}, ${lon}`;
       },
-      err => {
+      () => {
         gpsText.textContent = "GPS取得失敗";
       },
       {
@@ -146,6 +196,9 @@
       }
     );
   }
+
+  // 初期表示
+  resetTimerDisplay();
 </script>
 
 </body>

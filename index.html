@@ -60,7 +60,7 @@ body {
 /* 0秒専用 フェード点滅 */
 .zero-blink {
   animation: fadeBlink 1.2s infinite;
-  color: #FF450;  /*red orange*/
+  color: #FF4500;  /*red orange*/
 }
 @keyframes fadeBlink {
   0%   { opacity: 1; }
@@ -266,8 +266,7 @@ function scan() {
 function updateDisplay(ms) {
   const t = document.getElementById("timer");
   t.classList.remove("red", "blink", "zero-blink");
-  t.style.color = "#fff";
-
+  
   // 起動直後
   if (!running && !zeroMode && ms === 0) {
     t.textContent = "00:00";
@@ -276,7 +275,6 @@ function updateDisplay(ms) {
 
   // 0秒モード
   if (zeroMode) {
-    t.style.color = "red";
     t.classList.add("zero-blink");
     t.textContent = "00:00:00";
     return;

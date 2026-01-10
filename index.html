@@ -62,6 +62,17 @@ body {
 @keyframes blink {
   50% { opacity: 0; }
 }
+   
+/* 0秒専用：フェード点滅 */
+@keyframes fadeBlink {
+  0%   { opacity: 1; }
+  60%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.zero-blink {
+  animation: fadeBlink 1.2s infinite;
+}
 
 /* ==================================================
    擬似マップ
@@ -194,7 +205,10 @@ let timerInterval = null;
 // 実時間計測用（ズレ防止）
 let startTimestamp = 0;
 let lastRemainingMs = 0;
-
+   
+// タイマー0専用状態
+let zeroMode = false;
+   
 /* ==================================================
    画面切り替え制御
 ================================================== */
@@ -256,13 +270,21 @@ function stopTimer() {
   running = false;
   clearInterval(timerInterval);
 }
+/* タイマー０モード */
+if (remainMs <= 0) {
+  remainMs = 0;
+  running = false;
+  zeroMode = true;   // ← 0モード突入
+}
 
 /* リセット（設定時間に戻す） */
 function resetTimer() {
-  stopTimer();
-  remainingMs = setTimeMs;
-  updateDisplay();
+  running = false;
+  zeroMode = false;        // ← これが肝
+  remainMs = setMs;        // 設定時間に戻す
+  updateDisplay(remainMs);
 }
+
 
 /* ==================================================
    GPSスキャン（現在位置取得）
@@ -300,40 +322,39 @@ function scan() {
 /* ==================================================
    タイマー表示更新
 ================================================== */
-function updateDisplay() {
-  const t = document.getElementById('timer');
-  const ms = remainingMs;
+function updateDisplay(ms) {
+  const t = document.getElementById("timer");
 
-  // 毎回リセット
-  t.classList.remove('red', 'blink');
+  // クラスと色を毎回リセット（ガクつき防止）
+  t.classList.remove("red", "blink", "zero-blink");
+  t.style.color = "#fff";
 
-  // タイマー動作中のみ警告表示
-  if (running) {
-    if (ms <= 180000) t.classList.add('red');    // 3分以下で赤
-    if (ms <= 30000)  t.classList.add('blink'); // 30秒以下で点滅
-  }
-
-  // 表示形式切り替え
-  if (ms > 180000) {
-    // 3分より多い → 分:秒
-    const m = Math.floor(ms / 60000);
-    const s = Math.floor((ms % 60000) / 1000);
-    t.textContent =
-      `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  } else {
-    // 3分以下 → 分:秒:小数
-    const m = Math.floor(ms / 60000);
-    const s = Math.floor((ms % 60000) / 1000);
-    const cs = Math.floor((ms % 1000) / 10);
-    t.textContent =
-      `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(cs).padStart(2,'0')}`;
-  }
-
-  // 起動直後・未設定時
-  if (setTimeMs === 0 && !running) {
+  // ===== 起動直後（0で点滅なし）=====
+  if (!running && !zeroMode && ms === 0) {
     t.textContent = "00:00";
+    return;
+  }
+
+  // ===== タイマー0専用表示（リセットまで続く）=====
+  if (zeroMode) {
+    t.style.color = "red";
+    t.classList.add("zero-blink");
+    t.textContent = "00:00:00";
+    return;
+  }
+
+  // ===== 通常カウント中 =====
+  if (ms <= 180000) t.classList.add("red");     // 3分以下で赤
+  if (ms <= 30000)  t.classList.add("blink");   // 30秒以下で点滅
+
+  // 表示フォーマット
+  if (ms > 180000) {
+    t.textContent = formatMMSS(ms);       // 例 04:00
+  } else {
+    t.textContent = formatMMSSCC(ms);     // 例 03:00:00
   }
 }
+
 
 // 初期表示
 updateDisplay();

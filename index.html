@@ -268,7 +268,7 @@ function scan() {
     pos => {
       const lat = pos.coords.latitude.toFixed(6);
       const lon = pos.coords.longitude.toFixed(6);
-      gps.textContent = `${lat}:${lon}`;
+      gps.textContent = `Lat${lat}:Lon${lon}`;
     },
     () => gps.textContent = "GPS: 取得失敗",
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }

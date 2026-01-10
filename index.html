@@ -34,70 +34,124 @@ body {
 }
 
 /* ==================================================
+   フィールド画面（UI位置を下げる）
+================================================== */
+#field.screen {
+  padding-top: 22px; /* ←UI全体を少し下げる */
+}
+
+/* ==================================================
    タイマー表示
 ================================================== */
 #timer {
   font-size: 48px;
-  margin: 15px auto;
+  margin: 10px auto 12px;
   width: 280px;
   font-variant-numeric: slashed-zero;
 }
 
-/*red orange*/
-.red {
-  color: #FF4500; 
-}
+/* red orange */
+.red { color: #FF4500; }
 
-/* 30秒以下 点滅 */
+/* 30秒以下 点滅（red orange） */
 .blink {
   animation: blink 0.4s steps(1) infinite;
   color: #FF4500;
 }
-@keyframes blink {
-  50% { opacity: 0; }
-}
+@keyframes blink { 50% { opacity: 0; } }
 
-/* 0秒専用 フェード点滅 */
+/* 0秒専用 フェード点滅（red orange） */
 .zero-blink {
   animation: fadeBlink 1.2s infinite;
-  color: #FF4500;  /*red orange*/
+  color: #FF4500;
 }
 @keyframes fadeBlink {
-  0%   { opacity: 1; }
-  60%  { opacity: 0; }
+  0% { opacity: 1; }
+  60% { opacity: 0; }
   100% { opacity: 1; }
 }
 
 /* ==================================================
-   擬似マップ
+   マップ＋ラベル（10mグリッド：横6×縦9）
 ================================================== */
+#mapWrap {
+  /* ラベル分の枠を作る */
+  --mapW: 300px;
+  --mapH: 300px;
+  --labelW: 26px;
+  --labelH: 18px;
+
+  width: calc(var(--labelW) + var(--mapW));
+  margin: 10px auto 8px;
+  display: grid;
+  grid-template-columns: var(--labelW) var(--mapW);
+  grid-template-rows: var(--labelH) var(--mapH);
+  gap: 0;
+}
+
+#corner {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+#colLabels {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  align-items: center;
+  font-size: 12px;
+  color: #bbb;
+}
+
+#rowLabels {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  display: grid;
+  grid-template-rows: repeat(9, 1fr);
+  align-items: center;
+  font-size: 12px;
+  color: #bbb;
+}
+
+#colLabels div, #rowLabels div {
+  user-select: none;
+}
+
+/* マップ本体 */
 #map {
-  width: 300px;
-  height: 300px;
-  margin: 10px auto;
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+
+  width: var(--mapW);
+  height: var(--mapH);
   background: #222;
   border: 2px solid #555;
   position: relative;
+  overflow: hidden;
 }
 
+/* グリッド線：横6列 / 縦9行 */
 .grid {
   position: absolute;
-  width: 100%;
-  height: 100%;
-  background-size: 30px 30px;
+  inset: 0;
   background-image:
     linear-gradient(to right, #333 1px, transparent 1px),
     linear-gradient(to bottom, #333 1px, transparent 1px);
+  /* 300px / 6 = 50px, 300px / 9 = 33.333...px */
+  background-size: calc(var(--mapW) / 6) calc(var(--mapH) / 9);
 }
 
+/* 自分の位置（仮表示） */
 .player {
   width: 10px;
   height: 10px;
   background: #4af;
   border-radius: 50%;
   position: absolute;
-  top: 145px;
-  left: 145px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* ==================================================
@@ -107,7 +161,7 @@ body {
   font-size: 14px;
   margin-top: 8px;
   color: #8cf;
-   
+
   width: 260px;
   height: 20px;
   line-height: 20px;
@@ -116,7 +170,7 @@ body {
 
   display: flex;
   align-items: center;
-  justify-content:center;
+  justify-content: center;
 
   white-space: nowrap;
   overflow: hidden;
@@ -140,7 +194,7 @@ button {
 <!-- ================= メイン画面 ================= -->
 <div id="main" class="screen active">
   <h1>Field Map</h1>
-  <div class="version">Version 1.2.8</div> <!-- ========ヴァージョン(毎回更新)=========-->
+  <div class="version">Version 1.2.7</div>
   <button onclick="openField()">START</button>
 </div>
 
@@ -148,12 +202,21 @@ button {
 <div id="field" class="screen">
   <div id="timer">00:00</div>
 
-  <div id="map">
-    <div class="grid"></div>
-    <div class="player"></div>
+  <!-- マップ＋ラベル -->
+  <div id="mapWrap">
+    <div id="corner"></div>
+
+    <div id="colLabels"></div>
+
+    <div id="rowLabels"></div>
+
+    <div id="map">
+      <div class="grid"></div>
+      <div class="player"></div>
+    </div>
   </div>
 
-  <div id="gps">Lat--.------:Lon--.------</div>
+  <div id="gps">--.------:--.------</div>
 
   <button onclick="toggleStart()">START / STOP</button>
   <button onclick="resetTimer()">RESET</button>
@@ -178,6 +241,29 @@ button {
 </div>
 
 <script>
+/* ==================================================
+   グリッドラベル生成（10mグリッド：横6×縦9）
+================================================== */
+(function buildGridLabels() {
+  const cols = ["A","B","C","D","E","F"]; // 横60m → 10m刻みで6列
+  const rows = ["1","2","3","4","5","6","7","8","9"]; // 縦90m → 10m刻みで9行
+
+  const colWrap = document.getElementById("colLabels");
+  const rowWrap = document.getElementById("rowLabels");
+
+  cols.forEach(c => {
+    const d = document.createElement("div");
+    d.textContent = c;
+    colWrap.appendChild(d);
+  });
+
+  rows.forEach(r => {
+    const d = document.createElement("div");
+    d.textContent = r;
+    rowWrap.appendChild(d);
+  });
+})();
+
 /* ==================================================
    タイマー関連変数
 ================================================== */
@@ -206,7 +292,7 @@ function openTimerSet(){ show('timerSet'); }
    タイマー設定
 ================================================== */
 function setTimer() {
-  document.activeElement.blur(); // キーボード対策
+  document.activeElement.blur();
   const min = Number(document.getElementById('minuteInput').value);
   setTimeMs = min * 60 * 1000;
   remainingMs = setTimeMs;
@@ -262,13 +348,15 @@ function scan() {
     gps.textContent = "GPS: 非対応端末";
     return;
   }
-  gps.textContent = "GPS: 取得中…";
+
+  // 固定文字列（表示がガタつかない）
+  gps.textContent = "--.------:--.------";
 
   navigator.geolocation.getCurrentPosition(
     pos => {
       const lat = pos.coords.latitude.toFixed(6);
       const lon = pos.coords.longitude.toFixed(6);
-      gps.textContent = `Lat${lat}:Lon${lon}`;
+      gps.textContent = `${lat}:${lon}`;
     },
     () => gps.textContent = "GPS: 取得失敗",
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -281,14 +369,12 @@ function scan() {
 function updateDisplay(ms) {
   const t = document.getElementById("timer");
   t.classList.remove("red", "blink", "zero-blink");
-  
-  // 起動直後
+
   if (!running && !zeroMode && ms === 0) {
     t.textContent = "00:00";
     return;
   }
 
-  // 0秒モード
   if (zeroMode) {
     t.classList.add("zero-blink");
     t.textContent = "00:00:00";

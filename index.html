@@ -283,10 +283,8 @@ function scan() {
       const lon = pos.coords.longitude.toFixed(6);
       const acc = Math.round(pos.coords.accuracy);
 
-      gps.innerHTML =
-        `LAT: ${lat}<br>` +
-        `LON: ${lon}<br>` +
-        `ACC: ±${acc} m`;
+      gps.textContent = `Lat:${lat},Lon:${lon}`;
+     
     },
     () => {
       gps.textContent = "GPS: 取得失敗";

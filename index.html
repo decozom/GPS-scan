@@ -368,7 +368,7 @@ function scan() {
 ================================================== */
 function updateDisplay(ms) {
   const t = document.getElementById("timer");
-  t.classList.remove("red", "blink", "zero-blink");
+  t.classList.remove("red", "zero-blink");   /*30秒で点滅をする場合は"blink"を追加*/
 
   if (!running && !zeroMode && ms === 0) {
     t.textContent = "00:00";
@@ -382,7 +382,7 @@ function updateDisplay(ms) {
   }
 
   if (ms <= 180000) t.classList.add("red");
-  if (ms <= 30000)  t.classList.add("blink");
+  /*if (ms <= 30000)  t.classList.add("blink");*/
 
   const m = Math.floor(ms / 60000);
   const s = Math.floor((ms % 60000) / 1000);

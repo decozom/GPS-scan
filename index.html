@@ -43,8 +43,9 @@ body {
   font-variant-numeric: slashed-zero;
 }
 
+/*red orange*/
 .red {
-  color: #ff4444;
+  color: #FF4500; 
 }
 
 /* 30秒以下 点滅 */
@@ -58,6 +59,7 @@ body {
 /* 0秒専用 フェード点滅 */
 .zero-blink {
   animation: fadeBlink 1.2s infinite;
+  color: #FF450;  /*red orange*/
 }
 @keyframes fadeBlink {
   0%   { opacity: 1; }
@@ -122,7 +124,7 @@ button {
 <!-- ================= メイン画面 ================= -->
 <div id="main" class="screen active">
   <h1>Field Map</h1>
-  <div class="version">Version 1.1</div>
+  <div class="version">Version 1.2</div> <!-- ========ヴァージョン(毎回更新)=========-->
   <button onclick="openField()">START</button>
 </div>
 

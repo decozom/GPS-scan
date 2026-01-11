@@ -73,10 +73,34 @@ body {
   inset: 0;
   background-size: 30px 30px;
   background-image:
-    linear-gradient(to right, #333 1px, transparent 1px),
-    linear-gradient(to bottom, #333 1px, transparent 1px);
+    linear-gradient(to right, rgba(255,180,0,0.55) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,180,0,0.55) 1px, transparent 1px);
   pointer-events: none;
   z-index: 3;                /* マップより前に表示 */
+}
+/* グリッドラベル */
+#gridLabels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3; /* グリッドと同じ最前面 */
+  font-size: 11px;
+  color: rgba(255,180,0,0.85); /* 黄橙 */
+  font-variant-numeric: tabular-nums;
+}
+
+/* 横（A,B,C...） */
+.grid-x {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+}
+
+/* 縦（1,2,3...） */
+.grid-y {
+  position: absolute;
+  left: 4px;
+  transform: translateY(-50%);
 }
 
 /* マップ画像（中央配置＋スケール） */
@@ -177,7 +201,7 @@ button {
 ================================================== -->
 <div id="main" class="screen active">
   <h1>Field Timer</h1>
-  <div class="version">Version 2.1.5</div> <!--==============ヴァージョン=============-->
+  <div class="version">Version 2.1.6</div> <!--==============ヴァージョン=============-->
   <div id="fieldList">読み込み中…</div>
 </div>
 
@@ -190,7 +214,8 @@ button {
   <div id="timer">00:00</div>
 
   <div id="map">
-    <div class="grid"></div>
+    <div class="grid"></div> 
+    <div id="gridLabels"></div> <!-- グリッドラベル-->
     <img id="mapImg" alt="map">
     <div id="meDot"></div>
   </div>
@@ -494,7 +519,40 @@ function gpsToMapXY(lat, lon) {
   const y = (h21*X + h22*Y + h23) / denom;
   return { x, y };
 }
+/* ==================================================
+      グリッドラベル表示　1,2,3,.... A,B,C,...
+=====================================================*/
+function buildGridLabels(step = 30) {
+  const box = document.getElementById("gridLabels");
+  if (!box) return;
+  box.innerHTML = "";
 
+  const map = document.getElementById("map");
+  const w = map.clientWidth;
+  const h = map.clientHeight;
+
+  // 横：A,B,C...
+  const cols = Math.floor(w / step);
+  for (let i = 0; i <= cols; i++) {
+    const d = document.createElement("div");
+    d.className = "grid-x";
+    d.style.left = `${i * step}px`;
+    d.textContent = (i < 26)
+      ? String.fromCharCode(65 + i)   // A..Z
+      : `A${i - 25}`;                 // 26以降は A1, A2...（保険）
+    box.appendChild(d);
+  }
+
+  // 縦：1,2,3...
+  const rows = Math.floor(h / step);
+  for (let i = 0; i <= rows; i++) {
+    const d = document.createElement("div");
+    d.className = "grid-y";
+    d.style.top = `${i * step}px`;
+    d.textContent = i + 1;
+    box.appendChild(d);
+  }
+}
 /* ==================================================
   GPS SCAN
   ※ getCurrentPosition は非同期。タイマーは止めないが、
@@ -538,6 +596,7 @@ function scan() {
 ================================================== */
 updateDisplay(0);
 loadFieldList();
+buildGridLabels(30);
 </script>
 
 </body>

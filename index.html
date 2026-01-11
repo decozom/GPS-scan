@@ -545,33 +545,29 @@ function buildGridLabels(step = 30) {
   const cols = Math.floor(w / step);
   const rows = Math.floor(h / step);
 
-  // 左上は空欄にしたいので
-  // 横ラベルは「2マス目」= index 1 から開始
-  for (let i = 1; i <= cols; i++) {
+  // ===== 横：A,B,C…（2マス目から）=====
+  for (let col = 1; col < cols; col++) {
     const d = document.createElement("div");
     d.className = "grid-x";
 
-    // マス内の中央（線の上じゃなく中）
-    d.style.left = `${i * step + step / 2}px`;
+    // マス中央
+    d.style.left = `${col * step + step / 2}px`;
+    d.style.top  = `${step / 2}px`;
 
-    // 表示は 2マス目からなので A から始める
-    const labelIndex = i - 1; // 1→0(A), 2→1(B)...
-    d.textContent = (labelIndex < 26)
-      ? String.fromCharCode(65 + labelIndex)
-      : `A${labelIndex - 25}`;
+    const idx = col - 1; // Aから
+    d.textContent = String.fromCharCode(65 + idx);
     box.appendChild(d);
   }
 
-  // 縦ラベルも「2マス目」= index 1 から開始
-  for (let i = 1; i <= rows; i++) {
+  // ===== 縦：1,2,3…（2マス目から）=====
+  for (let row = 1; row < rows; row++) {
     const d = document.createElement("div");
     d.className = "grid-y";
 
-    // マス内の中央
-    d.style.top = `${i * step + step / 2}px`;
+    d.style.left = `${step / 2}px`;
+    d.style.top  = `${row * step + step / 2}px`;
 
-    // 表示は2マス目からなので 1 から始める
-    d.textContent = i; // 1..rows
+    d.textContent = row;
     box.appendChild(d);
   }
 }

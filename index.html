@@ -76,6 +76,7 @@ body {
     linear-gradient(to right, #333 1px, transparent 1px),
     linear-gradient(to bottom, #333 1px, transparent 1px);
   pointer-events: none;
+  z-index: 3;                /* マップより前に表示 */
 }
 
 /* マップ画像（中央配置＋スケール） */
@@ -91,6 +92,7 @@ body {
   -webkit-user-drag: none;
   pointer-events: none;
   opacity: 0.9;
+  z-index: 1;   /*グリッドより下に表示*/
 }
 
 /* 自分の位置ドット */
@@ -104,8 +106,9 @@ body {
   box-shadow: 0 0 0 2px rgba(0,0,0,0.35);
   transform: translate(-50%, -50%);
   pointer-events:none;
-  z-index: 5;
+  z-index: 5;      /* 最前面に表示 */
   display:none;
+  
 }
 
 /* ==================================================
@@ -174,7 +177,7 @@ button {
 ================================================== -->
 <div id="main" class="screen active">
   <h1>Field Timer</h1>
-  <div class="version">Version 2.1.4</div>          <!--ヴァージョン-->
+  <div class="version">Version 2.1.5</div> <!--==============ヴァージョン=============-->
   <div id="fieldList">読み込み中…</div>
 </div>
 

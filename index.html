@@ -14,159 +14,111 @@ body {
   background: #111;
   color: #eee;
   text-align: center;
+  /* フォント固定（斜線入り0が使える） */
   font-family: "JetBrains Mono", "Source Code Pro", monospace;
 }
 
-.screen {
-  display: none;
-  padding: 10px;
-}
-.active {
-  display: block;
-}
+.screen { display: none; padding: 10px; }
+.active { display: block; }
 
-/* ==================================================
-   メイン画面
-================================================== */
-.version {
-  font-size: 14px;
-  color: #aaa;
-}
-
-/* ==================================================
-   フィールド画面（UI位置を下げる）
-================================================== */
-#field.screen {
-  padding-top: 22px; /* ←UI全体を少し下げる */
-}
+.version { font-size: 14px; color: #aaa; }
 
 /* ==================================================
    タイマー表示
 ================================================== */
 #timer {
   font-size: 48px;
-  margin: 10px auto 12px;
-  width: 280px;
-  font-variant-numeric: slashed-zero;
+  margin: 15px auto;
+  width: 280px; /* 数字ズレ防止 */
+  font-variant-numeric: slashed-zero; /* 斜線入り0 */
 }
 
-/* red orange */
+/* 3分以下：red orange */
 .red { color: #FF4500; }
 
-/* 30秒以下 点滅（red orange）
+/* 30秒以下：点滅（red orange） */
 .blink {
   animation: blink 0.4s steps(1) infinite;
   color: #FF4500;
 }
 @keyframes blink { 50% { opacity: 0; } }
-*/
-/* 0秒専用 フェード点滅（red orange） */
+
+/* 0秒：赤フェード点滅（リセットまで） */
 .zero-blink {
   animation: fadeBlink 1.2s infinite;
-  color: #FF4500;
+  color: #ff3333;
 }
 @keyframes fadeBlink {
-  0% { opacity: 1; }
-  60% { opacity: 0; }
+  0%   { opacity: 1; }
+  60%  { opacity: 0; }
   100% { opacity: 1; }
 }
 
 /* ==================================================
-   マップ＋ラベル（10mグリッド：横6×縦9）
+   マップ表示
 ================================================== */
-#mapWrap {
-  /* ラベル分の枠を作る */
-  --mapW: 300px;
-  --mapH: 300px;
-  --labelW: 26px;
-  --labelH: 18px;
-
-  width: calc(var(--labelW) + var(--mapW));
-  margin: 10px auto 8px;
-  display: grid;
-  grid-template-columns: var(--labelW) var(--mapW);
-  grid-template-rows: var(--labelH) var(--mapH);
-  gap: 0;
-}
-
-#corner {
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-}
-
-#colLabels {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  align-items: center;
-  font-size: 12px;
-  color: #bbb;
-}
-
-#rowLabels {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-  display: grid;
-  grid-template-rows: repeat(9, 1fr);
-  align-items: center;
-  font-size: 12px;
-  color: #bbb;
-}
-
-#colLabels div, #rowLabels div {
-  user-select: none;
-}
-
-/* マップ本体 */
 #map {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-
-  width: var(--mapW);
-  height: var(--mapH);
+  width: 300px;
+  height: 300px;
+  margin: 10px auto;
   background: #222;
   border: 2px solid #555;
   position: relative;
   overflow: hidden;
 }
 
-/* グリッド線：横6列 / 縦9行 */
+/* グリッド */
 .grid {
   position: absolute;
   inset: 0;
+  background-size: 30px 30px;
   background-image:
     linear-gradient(to right, #333 1px, transparent 1px),
     linear-gradient(to bottom, #333 1px, transparent 1px);
-  /* 300px / 6 = 50px, 300px / 9 = 33.333...px */
-  background-size: calc(var(--mapW) / 6) calc(var(--mapH) / 9);
+  pointer-events: none;
 }
 
-/* 自分の位置（仮表示） */
-.player {
-  width: 10px;
-  height: 10px;
-  background: #4af;
-  border-radius: 50%;
+/* マップ画像（中央配置＋スケール） */
+#mapImg {
   position: absolute;
   left: 50%;
   top: 50%;
+  transform: translate(-50%, -50%) scale(var(--imgScale, 1));
+  transform-origin: center center;
+  max-width: none;
+  max-height: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* 自分の位置ドット */
+#meDot{
+  position:absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background:#00e5ff;
+  border:2px solid rgba(255,255,255,0.85);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.35);
   transform: translate(-50%, -50%);
+  pointer-events:none;
+  z-index: 5;
+  display:none;
 }
 
 /* ==================================================
-   GPS表示
+   GPS表示（固定幅でガタつき防止）
 ================================================== */
 #gps {
   font-size: 14px;
-  margin-top: 8px;
+  margin: 8px auto 0;
   color: #8cf;
 
   width: 260px;
   height: 20px;
   line-height: 20px;
-  margin-left: auto;
-  margin-right: auto;
 
   display: flex;
   align-items: center;
@@ -179,7 +131,33 @@ body {
 }
 
 /* ==================================================
-   ボタン
+   フィールド一覧（メイン画面）
+================================================== */
+#fieldList {
+  width: min(92vw, 420px);
+  margin: 12px auto 0;
+  text-align: left;
+  background: #161616;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.fieldItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-bottom: 1px dashed #2a2a2a;
+}
+.fieldItem:last-child { border-bottom: none; }
+
+.fieldName { font-size: 14px; color: #e8e8e8; }
+.fieldId   { font-size: 12px; color: #888; }
+
+/* ==================================================
+   ボタン共通
 ================================================== */
 button {
   font-size: 16px;
@@ -191,47 +169,49 @@ button {
 
 <body>
 
-<!-- ================= メイン画面 ================= -->
+<!-- ==================================================
+     メイン画面（フィールド選択）
+================================================== -->
 <div id="main" class="screen active">
-  <h1>Field Map</h1>
-  <div class="version">Version 1.2.8</div>. <!-- ==========ヴァージョン========= -->
-  <button onclick="openField()">START</button>
+  <h1>Field Timer</h1>
+  <div class="version">Version 2.1.0</div>
+  <div id="fieldList">読み込み中…</div>
 </div>
 
-<!-- ================= フィールド画面 ================= -->
+<!-- ==================================================
+     フィールド画面（タイマー＋マップ）
+================================================== -->
 <div id="field" class="screen">
+  <h2 id="fieldTitle">Field</h2>
+
   <div id="timer">00:00</div>
 
-  <!-- マップ＋ラベル -->
-  <div id="mapWrap">
-    <div id="corner"></div>
-
-    <div id="colLabels"></div>
-
-    <div id="rowLabels"></div>
-
-    <div id="map">
-      <div class="grid"></div>
-      <div class="player"></div>
-    </div>
+  <div id="map">
+    <div class="grid"></div>
+    <img id="mapImg" alt="map">
+    <div id="meDot"></div>
   </div>
 
   <div id="gps">--.------:--.------</div>
 
-  <button onclick="toggleStart()">START / STOP</button>
-  <button onclick="resetTimer()">RESET</button>
-  <button onclick="scan()">SCAN</button>
-  <button onclick="openSettings()">SETTINGS</button>
+  <button type="button" onclick="toggleStart()">START / STOP</button>
+  <button type="button" onclick="resetTimer()">RESET</button>
+  <button type="button" onclick="scan()">SCAN</button>
+  <button type="button" onclick="openSettings()">SETTINGS</button>
 </div>
 
-<!-- ================= 設定画面 ================= -->
+<!-- ==================================================
+     設定画面
+================================================== -->
 <div id="settings" class="screen">
   <h2>Settings</h2>
-  <button onclick="openTimerSet()">タイマーセット</button><br>
-  <button onclick="backToMain()">メイン画面に戻る</button>
+  <button type="button" onclick="openTimerSet()">タイマーセット</button><br>
+  <button type="button" onclick="backToMain()">メイン画面に戻る</button>
 </div>
 
-<!-- ================= タイマー設定画面 ================= -->
+<!-- ==================================================
+     タイマー設定画面
+================================================== -->
 <div id="timerSet" class="screen">
   <h2>Timer Set (min)</h2>
   <input id="minuteInput" type="number" min="0" value="0">
@@ -242,68 +222,41 @@ button {
 
 <script>
 /* ==================================================
-   グリッドラベル生成（10mグリッド：横6×縦9）
-================================================== */
-(function buildGridLabels() {
-  const cols = ["A","B","C","D","E","F"]; // 横60m → 10m刻みで6列
-  const rows = ["1","2","3","4","5","6","7","8","9"]; // 縦90m → 10m刻みで9行
-
-  const colWrap = document.getElementById("colLabels");
-  const rowWrap = document.getElementById("rowLabels");
-
-  cols.forEach(c => {
-    const d = document.createElement("div");
-    d.textContent = c;
-    colWrap.appendChild(d);
-  });
-
-  rows.forEach(r => {
-    const d = document.createElement("div");
-    d.textContent = r;
-    rowWrap.appendChild(d);
-  });
-})();
-
-/* ==================================================
-   タイマー関連変数
-================================================== */
-let setTimeMs = 0;
-let remainingMs = 0;
-let running = false;
-let zeroMode = false;
-
-let timerInterval = null;
-let startTimestamp = 0;
-let lastRemainingMs = 0;
-
-/* ==================================================
-   画面切り替え
+  画面切り替え
 ================================================== */
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function openField()   { show('field'); updateDisplay(remainingMs); }
-function openSettings(){ show('settings'); }
-function backToMain()  { show('main'); }
-function openTimerSet(){ show('timerSet'); }
+
+function backToMain()   { show('main'); }
+function openSettings() { show('settings'); }
+function openTimerSet() { show('timerSet'); }
 
 /* ==================================================
-   タイマー設定
+  タイマー関連（実時間差分方式）
 ================================================== */
+let setTimeMs = 0;        // 設定された時間
+let remainingMs = 0;      // 残り
+let running = false;      // 動作中
+let zeroMode = false;     // 0秒フェード点滅状態
+
+let timerInterval = null;
+let startTimestamp = 0;
+let lastRemainingMs = 0;
+
 function setTimer() {
-  document.activeElement.blur();
+  document.activeElement.blur(); // iOSキーボード対策
   const min = Number(document.getElementById('minuteInput').value);
+
   setTimeMs = min * 60 * 1000;
   remainingMs = setTimeMs;
+
   zeroMode = false;
   updateDisplay(remainingMs);
   show('field');
 }
 
-/* ==================================================
-   タイマー制御
-================================================== */
 function toggleStart() {
   if (!running) {
     if (remainingMs <= 0) remainingMs = setTimeMs;
@@ -318,10 +271,11 @@ function toggleStart() {
 
       if (remainingMs === 0) {
         stopTimer();
-        zeroMode = true;
+        zeroMode = true; // 0秒フェード点滅へ
       }
       updateDisplay(remainingMs);
     }, 50);
+
   } else {
     stopTimer();
   }
@@ -339,61 +293,248 @@ function resetTimer() {
   updateDisplay(remainingMs);
 }
 
-/* ==================================================
-   GPSスキャン
-================================================== */
-function scan() {
-  const gps = document.getElementById("gps");
-  if (!navigator.geolocation) {
-    gps.textContent = "GPS: 非対応端末";
-    return;
-  }
-
-  // 固定文字列（表示がガタつかない）
-  gps.textContent = "--.------:--.------";
-
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const lat = pos.coords.latitude.toFixed(6);
-      const lon = pos.coords.longitude.toFixed(6);
-      gps.textContent = `${lat}:${lon}`;
-    },
-    () => gps.textContent = "GPS: 取得失敗",
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
-}
-
-/* ==================================================
-   タイマー表示更新
-================================================== */
 function updateDisplay(ms) {
   const t = document.getElementById("timer");
-  t.classList.remove("red", "zero-blink");   /*30秒で点滅をする場合は"blink"を追加*/
+  t.classList.remove("red", "blink", "zero-blink");
 
+  // 起動直後（0で点滅なし）
   if (!running && !zeroMode && ms === 0) {
     t.textContent = "00:00";
     return;
   }
 
+  // 0秒モード（リセットまで継続）
   if (zeroMode) {
     t.classList.add("zero-blink");
     t.textContent = "00:00:00";
     return;
   }
 
+  // 3分以下で赤orange、30秒以下で点滅
   if (ms <= 180000) t.classList.add("red");
-  /*if (ms <= 30000)  t.classList.add("blink");*/
+  if (ms <= 30000)  t.classList.add("blink");
 
-  const m = Math.floor(ms / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
+  const m  = Math.floor(ms / 60000);
+  const s  = Math.floor((ms % 60000) / 1000);
   const cs = Math.floor((ms % 1000) / 10);
 
-  t.textContent = ms > 180000
+  t.textContent = (ms > 180000)
     ? `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
     : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(cs).padStart(2,'0')}`;
 }
 
+/* ==================================================
+  フィールドJSON読み込み
+================================================== */
+let currentField = null;
+let H = null;        // ホモグラフィ係数
+let lat0 = 0, lon0 = 0, cosLat0 = 1;
+
+const mapImg = document.getElementById("mapImg");
+const meDot  = document.getElementById("meDot");
+const gpsEl  = document.getElementById("gps");
+
+async function loadFieldList() {
+  const box = document.getElementById("fieldList");
+  try {
+    const res = await fetch("fields/fields.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("fields.json not found");
+    const list = await res.json();
+
+    if (!Array.isArray(list) || list.length === 0) {
+      box.textContent = "fields/fields.json が空です";
+      return;
+    }
+
+    box.innerHTML = "";
+    list.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "fieldItem";
+
+      const left = document.createElement("div");
+      left.innerHTML =
+        `<div class="fieldName">${escapeHtml(item.name || item.id)}</div>
+         <div class="fieldId">${escapeHtml(item.id || "")}</div>`;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "選択";
+      btn.onclick = () => openFieldByFile(item.file);
+
+      row.appendChild(left);
+      row.appendChild(btn);
+      box.appendChild(row);
+    });
+
+  } catch (e) {
+    box.textContent = "フィールド一覧の読み込み失敗（fields/fields.json を確認）";
+    console.error(e);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+async function openFieldByFile(file) {
+  try {
+    const res = await fetch(`fields/${file}`, { cache: "no-store" });
+    if (!res.ok) throw new Error("field json not found");
+    const data = await res.json();
+
+    if (!data || !Array.isArray(data.anchors) || data.anchors.length !== 4) {
+      alert("フィールドデータが不正（anchorsが4点必要）");
+      return;
+    }
+
+    currentField = data;
+    document.getElementById("fieldTitle").textContent = data.name || data.id || "Field";
+
+    // フィールド読み込み時：タイマーは0初期（必要なら変更OK）
+    setTimeMs = 0;
+    remainingMs = 0;
+    running = false;
+    zeroMode = false;
+    updateDisplay(0);
+
+    // 画像セット
+    document.documentElement.style.setProperty("--imgScale", String(data.defaultImgScale ?? 1.0));
+    mapImg.src = data.image;
+
+    // GPS表示初期化（固定幅）
+    gpsEl.textContent = "--.------:--.------";
+
+    // 現在地ドット非表示
+    meDot.style.display = "none";
+
+    // 4点変換準備
+    prepareTransform(data.anchors);
+
+    show("field");
+
+  } catch (e) {
+    alert("フィールド読み込み失敗。fieldsフォルダとjsonを確認して。");
+    console.error(e);
+  }
+}
+
+/* ==================================================
+  4点GPS → マップXY（ホモグラフィ）
+================================================== */
+const R = 6378137;
+
+function latLonToLocalMeters(lat, lon) {
+  const x = (lon - lon0) * Math.PI/180 * cosLat0 * R;
+  const y = (lat - lat0) * Math.PI/180 * R;
+  return { X: x, Y: y };
+}
+
+function solveLinear(A, b) {
+  const n = b.length;
+  const M = A.map((row, i) => row.concat([b[i]]));
+
+  for (let col = 0; col < n; col++) {
+    let pivot = col;
+    for (let r = col + 1; r < n; r++) {
+      if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
+    }
+    [M[col], M[pivot]] = [M[pivot], M[col]];
+
+    const div = M[col][col];
+    if (Math.abs(div) < 1e-12) throw new Error("singular");
+
+    for (let c = col; c <= n; c++) M[col][c] /= div;
+
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const f = M[r][col];
+      for (let c = col; c <= n; c++) M[r][c] -= f * M[col][c];
+    }
+  }
+  return M.map(row => row[n]);
+}
+
+function computeHomography(anchors) {
+  const A = [];
+  const b = [];
+
+  for (const p of anchors) {
+    const { X, Y } = latLonToLocalMeters(p.lat, p.lon);
+    const x = p.x, y = p.y;
+
+    // x式
+    A.push([X, Y, 1, 0, 0, 0, -x*X, -x*Y]); b.push(x);
+    // y式
+    A.push([0, 0, 0, X, Y, 1, -y*X, -y*Y]); b.push(y);
+  }
+  return solveLinear(A, b); // [h11..h32], h33=1
+}
+
+function prepareTransform(anchors) {
+  lat0 = anchors.reduce((s,a)=>s+a.lat,0)/4;
+  lon0 = anchors.reduce((s,a)=>s+a.lon,0)/4;
+  cosLat0 = Math.cos(lat0 * Math.PI/180);
+  H = computeHomography(anchors);
+}
+
+function gpsToMapXY(lat, lon) {
+  const { X, Y } = latLonToLocalMeters(lat, lon);
+  const [h11,h12,h13,h21,h22,h23,h31,h32] = H;
+
+  const denom = h31*X + h32*Y + 1;
+  const x = (h11*X + h12*Y + h13) / denom;
+  const y = (h21*X + h22*Y + h23) / denom;
+  return { x, y };
+}
+
+/* ==================================================
+  GPS SCAN
+  ※ getCurrentPosition は非同期。タイマーは止めないが、
+     端末負荷で一瞬カクつくことはあり得る（Safariあるある）
+================================================== */
+function scan() {
+  if (!currentField || !H) {
+    gpsEl.textContent = "先にフィールド選択";
+    return;
+  }
+  if (!navigator.geolocation) {
+    gpsEl.textContent = "GPS: 非対応端末";
+    return;
+  }
+
+  gpsEl.textContent = "取得中...";
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      // 表示（固定桁でガタつき防止）
+      gpsEl.textContent = `${lat.toFixed(6)}:${lon.toFixed(6)}`;
+
+      // マップXYへ変換してドット表示
+      const { x, y } = gpsToMapXY(lat, lon);
+      meDot.style.left = `${x}px`;
+      meDot.style.top  = `${y}px`;
+      meDot.style.display = "block";
+    },
+    () => {
+      gpsEl.textContent = "GPS: 取得失敗";
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+/* ==================================================
+  起動
+================================================== */
 updateDisplay(0);
+loadFieldList();
 </script>
 
 </body>

@@ -84,21 +84,31 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 3; /* グリッドと同じ最前面 */
+  
+  /*シアン文字*/
   font-size: 11px;
-  color: rgba(255,180,0,0.85); /* 黄橙 */
+  color: rgba(120,245,255,0.95);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+  
+  /*地図に負けないやつ*/
+  text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 6px rgda(0,0,0,0.6);
+  
+}
+.grid-x ,.drid-y{
+  position: absolute;
+  background: rgba(0,0,0,0.45);
+  padding: 1px 4px;
+  border-radius: 4px;
 }
 
-/* 横（A,B,C...） */
+
 .grid-x {
-  position: absolute;
   top: 2px;
   transform: translateX(-50%);
 }
 
-/* 縦（1,2,3...） */
 .grid-y {
-  position: absolute;
   left: 4px;
   transform: translateY(-50%);
 }

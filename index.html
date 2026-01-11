@@ -84,33 +84,32 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 3; /* グリッドと同じ最前面 */
-  
-  /*シアン文字*/
-  font-size: 11px;
+  z-index: 3;
+
   color: rgba(120,245,255,0.95);
+  font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  
-  /*地図に負けないやつ*/
-  text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 6px rgda(0,0,0,0.6);
-  
+  text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
 }
-.grid-x ,.drid-y{
+
+/* マス内に収める（線と重ならない） */
+.grid-x, .grid-y {
   position: absolute;
   background: rgba(0,0,0,0.45);
   padding: 1px 4px;
   border-radius: 4px;
 }
 
-
+/* 1行目：上から少し下げてマス内へ */
 .grid-x {
-  top: 2px;
+  top: 6px;              /* 2px → 6px */
   transform: translateX(-50%);
 }
 
+/* 1列目：左から少し右へ */
 .grid-y {
-  left: 4px;
+  left: 6px;             /* 2px → 6px */
   transform: translateY(-50%);
 }
 
@@ -212,7 +211,7 @@ button {
 ================================================== -->
 <div id="main" class="screen active">
   <h1>Field Timer</h1>
-  <div class="version">Version 2.1.6</div> <!--==============ヴァージョン=============-->
+  <div class="version">Version 2.1.7</div> <!--==============ヴァージョン=============-->
   <div id="fieldList">読み込み中…</div>
 </div>
 
@@ -543,25 +542,36 @@ function buildGridLabels(step = 30) {
   const w = map.clientWidth;
   const h = map.clientHeight;
 
-  // 横：A,B,C...
   const cols = Math.floor(w / step);
-  for (let i = 0; i <= cols; i++) {
+  const rows = Math.floor(h / step);
+
+  // 左上は空欄にしたいので
+  // 横ラベルは「2マス目」= index 1 から開始
+  for (let i = 1; i <= cols; i++) {
     const d = document.createElement("div");
     d.className = "grid-x";
-    d.style.left = `${i * step}px`;
-    d.textContent = (i < 26)
-      ? String.fromCharCode(65 + i)   // A..Z
-      : `A${i - 25}`;                 // 26以降は A1, A2...（保険）
+
+    // マス内の中央（線の上じゃなく中）
+    d.style.left = `${i * step + step / 2}px`;
+
+    // 表示は 2マス目からなので A から始める
+    const labelIndex = i - 1; // 1→0(A), 2→1(B)...
+    d.textContent = (labelIndex < 26)
+      ? String.fromCharCode(65 + labelIndex)
+      : `A${labelIndex - 25}`;
     box.appendChild(d);
   }
 
-  // 縦：1,2,3...
-  const rows = Math.floor(h / step);
-  for (let i = 0; i <= rows; i++) {
+  // 縦ラベルも「2マス目」= index 1 から開始
+  for (let i = 1; i <= rows; i++) {
     const d = document.createElement("div");
     d.className = "grid-y";
-    d.style.top = `${i * step}px`;
-    d.textContent = i + 1;
+
+    // マス内の中央
+    d.style.top = `${i * step + step / 2}px`;
+
+    // 表示は2マス目からなので 1 から始める
+    d.textContent = i; // 1..rows
     box.appendChild(d);
   }
 }

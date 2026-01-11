@@ -96,9 +96,9 @@ body {
 /* マス内に収める（線と重ならない） */
 .grid-x, .grid-y {
   position: absolute;
-  background: rgba(0,0,0,0.65);
-  padding: 2px 5px;
-  border-radius: 4px;
+  background: none;
+  padding: 0;
+  border-radius: 0;
 }
 
 /* 1行目：上から少し下げてマス内へ */
@@ -556,7 +556,7 @@ function buildGridLabels(step = 30) {
 
     // マス中央
     d.style.left = `${col * step + step / 2}px`;
-    d.style.top  = `${step / 2}px`;
+    d.style.top  = `${step / 0.25}px`;
 
     const idx = col - 1; // Aから
     d.textContent = String.fromCharCode(65 + idx);
@@ -568,7 +568,7 @@ function buildGridLabels(step = 30) {
     const d = document.createElement("div");
     d.className = "grid-y";
 
-    d.style.left = `${step / 2}px`;
+    d.style.left = `${step / 0.25}px`;
     d.style.top  = `${row * step + step / 2}px`;
 
     d.textContent = row;

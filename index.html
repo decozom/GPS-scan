@@ -452,9 +452,13 @@ async function openFieldByFile(file) {
     meDot.style.display = "none";
 
     // 4点変換準備
-    prepareTransform(data.anchors);
+   prepareTransform(data.anchors);
 
-    show("field");
+　　show("field");
+
+　　// 表示後にマップサイズが確定してからグリッドラベル生成
+　　requestAnimationFrame(() => buildGridLabels(30));
+
 
   } catch (e) {
     alert("フィールド読み込み失敗。fieldsフォルダとjsonを確認して。");

@@ -136,7 +136,7 @@ h1, h2{
 }
 
 /* ===============================
-   フィールド外警告（EVA風）
+   フィールド外警告（EVA控えめ版）
 ================================ */
 #mapWarning{
   position: absolute;
@@ -146,35 +146,25 @@ h1, h2{
   align-items: center;
   justify-content: center;
 
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
+  font-size: 22px;        /* 少し大きいが主張しすぎない */
+  font-weight: 700;
+  letter-spacing: 0.16em;
 
-  color: #ff3b1f; /* EVA赤 */
+  color: #ff4528;         /* 前寄りの赤橙（戻した） */
   text-shadow:
-    0 0 6px rgba(255,60,30,0.9),
-    0 0 14px rgba(255,60,30,0.7),
-    0 0 28px rgba(255,60,30,0.5);
+    0 0 3px rgba(255,69,40,0.8),
+    0 0 8px rgba(255,69,40,0.6);
 
-  animation: evaAlert 1.4s infinite;
+  animation: evaFade 1.8s infinite;
   z-index: 8;
   pointer-events: none;
 }
 
-/* エヴァ警告アニメ */
-@keyframes evaAlert {
-  0% {
-    opacity: 0.25;
-    transform: scale(0.98);
-  }
-  40% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
-  100% {
-    opacity: 0.25;
-    transform: scale(0.98);
-  }
+/* 動かさない・フェードのみ */
+@keyframes evaFade {
+  0%   { opacity: 0.35; }
+  50%  { opacity: 0.85; }
+  100% { opacity: 0.35; }
 }
 
 /* ==================================================
@@ -271,7 +261,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
        ▼▼▼ ヴァージョン（ここ！） ▼▼▼
        「ここだけ」毎回更新する
        ========================= -->
-  <div class="version">Version 2.3.0</div>
+  <div class="version">Version 2.3.1</div>
   <!-- =========================
        ▲▲▲ ヴァージョン（ここ！） ▲▲▲
        ========================= -->

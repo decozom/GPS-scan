@@ -146,35 +146,35 @@ h1, h2{
   align-items: center;
   justify-content: center;
 
-  font-size: 22px;        /* 少し大きいが主張しすぎない */
+  font-size: 25px;        /* 少し大きいが主張しすぎない */
   font-weight: 700;
   letter-spacing: 0.16em;
 
   color: #ff4528;         /* 前寄りの赤橙（戻した） */
-  text-shadow:
-    0 0 3px rgba(255,69,40,0.8),
-    0 0 8px rgba(255,69,40,0.6);
+  text-shadow: none;
+    
 
-  animation: evaFade 1.8s infinite;
+  animation: evaFade 1.3s infinite;
   z-index: 8;
   pointer-events: none;
 }
 
 /* 動かさない・フェードのみ */
 @keyframes evaFade {
-  0%   { opacity: 0.35; }
-  50%  { opacity: 0.85; }
-  100% { opacity: 0.35; }
+  0%   { opacity: 0.25; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.25; }
 }
 
 /* ===============================
    赤いスキャンライン
 ================================ */
-#scanline{
+#mapScanline{
   position: absolute;
   inset: 0;
   display: none;
-
+  z-index: 7;
+  
   background:
     repeating-linear-gradient(
       to bottom,
@@ -184,8 +184,8 @@ h1, h2{
       transparent 6px
     );
 
-  animation: scanMove 6s linear infinite;
-  z-index: 6;              /* グリッドより上、警告文字より下 */
+  animation: scanMove 2.2s linear infinite;
+  
   pointer-events: none;
 }
 
@@ -289,7 +289,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
        ▼▼▼ ヴァージョン（ここ！） ▼▼▼
        「ここだけ」毎回更新する
        ========================= -->
-  <div class="version">Version 2.3.2</div>
+  <div class="version">Version 2.3.3</div>
   <!-- =========================
        ▲▲▲ ヴァージョン（ここ！） ▲▲▲
        ========================= -->
@@ -321,7 +321,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
     <div id="mapWarning">//OUT OF FIELD//</div>
   </div>
 
-　<div id="scanline"></div>
+　<div id="mapScanline"></div>
   <div id="gps">--.------:--.------</div>
 
   <div class="icon-row">
@@ -511,6 +511,7 @@ const mapImg = document.getElementById("mapImg");
 const meDot  = document.getElementById("meDot");
 const gpsEl  = document.getElementById("gps");
 const mapWarning = document.getElementById("mapWarning");
+const mapScanLine = document.getElementById("mapScanLine");
 
 let fieldListData = [];
 let currentPage = 0;
@@ -780,11 +781,12 @@ function scan() {
         // フィールド外
         meDot.style.display = "none";
         mapWarning.style.display = "flex";
+        mapScanLine.style.display = "block";
         return;
-      }
-
+       }
       // フィールド内
       mapWarning.style.display = "none";
+      mapScanLine.style.display = "none";
       meDot.style.left = `${x}px`;
       meDot.style.top  = `${y}px`;
       meDot.style.display = "block";

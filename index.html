@@ -167,6 +167,34 @@ h1, h2{
   100% { opacity: 0.35; }
 }
 
+/* ===============================
+   赤いスキャンライン
+================================ */
+#scanline{
+  position: absolute;
+  inset: 0;
+  display: none;
+
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,70,40,0.08),
+      rgba(255,70,40,0.08) 1px,
+      transparent 1px,
+      transparent 6px
+    );
+
+  animation: scanMove 6s linear infinite;
+  z-index: 6;              /* グリッドより上、警告文字より下 */
+  pointer-events: none;
+}
+
+/* ゆっくり流れるだけ */
+@keyframes scanMove{
+  from { background-position: 0 0; }
+  to   { background-position: 0 60px; }
+}
+
 /* ==================================================
    GPS表示（固定幅）
 ================================================== */
@@ -261,7 +289,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
        ▼▼▼ ヴァージョン（ここ！） ▼▼▼
        「ここだけ」毎回更新する
        ========================= -->
-  <div class="version">Version 2.3.1</div>
+  <div class="version">Version 2.3.2</div>
   <!-- =========================
        ▲▲▲ ヴァージョン（ここ！） ▲▲▲
        ========================= -->
@@ -293,6 +321,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
     <div id="mapWarning">//OUT OF FIELD//</div>
   </div>
 
+　<div id="scanline"></div>
   <div id="gps">--.------:--.------</div>
 
   <div class="icon-row">
@@ -705,39 +734,69 @@ function isInsideMap(x, y) {
   ③ GPS SCAN（取得 → 変換 → 判定 → 表示）
 ================================================== */
 function scan() {
-  if (!currentField || !H) { gpsEl.textContent = "先にフィールド選択"; return; }
-  if (!navigator.geolocation) { gpsEl.textContent = "GPS: 非対応端末"; return; }
+  // =========================
+  // ① 前提チェック
+  // =========================
+  if (!currentField || !H) {
+    gpsEl.textContent = "先にフィールド選択";
+    return;
+  }
+  if (!navigator.geolocation) {
+    gpsEl.textContent = "GPS: 非対応端末";
+    return;
+  }
 
   gpsEl.textContent = "取得中...";
 
+  // =========================
+  // ② GPS取得
+  // =========================
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
-      // 表示（固定桁）
       gpsEl.textContent = `${lat.toFixed(6)}:${lon.toFixed(6)}`;
 
-      // 変換
+      // =========================
+      // ③ 座標変換
+      // =========================
       const { x, y } = gpsToMapXY(lat, lon);
+      const map = document.getElementById("map");
 
-      // 判定（ここではUIを触らない）
-      const inside = isInsideMap(x, y);
+      // =========================
+      // ④ フィールド内 / 外 判定
+      // =========================
+      const isOutOfField =
+        x < 0 ||
+        y < 0 ||
+        x > map.clientWidth ||
+        y > map.clientHeight;
 
-      // 表示（ここだけでUIを制御）
-      if (!inside) {
-        setOutOfField(true);
+      // =========================
+      // ⑤ 表示制御
+      // =========================
+      if (isOutOfField) {
+        // フィールド外
+        meDot.style.display = "none";
+        mapWarning.style.display = "flex";
         return;
       }
 
-      setMeDot(x, y);
-      setOutOfField(false);
+      // フィールド内
+      mapWarning.style.display = "none";
+      meDot.style.left = `${x}px`;
+      meDot.style.top  = `${y}px`;
+      meDot.style.display = "block";
     },
+
+    // =========================
+    // GPS失敗時
+    // =========================
     () => {
       gpsEl.textContent = "GPS: 取得失敗";
-      // 失敗時に警告を出したいなら：
-      // setOutOfField(true);
     },
+
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 }

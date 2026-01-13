@@ -265,6 +265,36 @@ h1, h2{
 #timerSet input{
   margin: 4px 0 0;
 }
+/* ===============================
+   フィールド外警告表示
+================================ */
+#mapWarning{
+  position: absolute;
+  inset: 0;
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+
+  color: #FF4500; /* red orange */
+  text-shadow:
+    0 0 6px rgba(0,0,0,0.9),
+    0 0 14px rgba(0,0,0,0.7);
+
+  animation: fadeSoft 1.6s infinite;
+  z-index: 8;          /* 最前面 */
+  pointer-events: none;
+}
+
+@keyframes fadeSoft {
+  0%   { opacity: 0.25; }
+  50%  { opacity: 1.0; }
+  100% { opacity: 0.25; }
+}
 </style>
 </head>
 
@@ -272,7 +302,8 @@ h1, h2{
 <!-- === ↓↓↓HTML ================================================================-->
 <div id="main" class="screen active">
   <h1>Field Timer</h1>
-  <div class="version">Version 2.2.4</div> <!-- ==============ヴァージョン====================== -->
+  <!-- ヴァージョン　ヴァージョン　ヴァージョン　ヴァージョン　-->
+  <div class="version">Version 2.2.5</div> <!-- ==============ヴァージョン====================== -->
   <div id="fieldList">読み込み中…</div>
 
   <div id="pager">
@@ -292,6 +323,8 @@ h1, h2{
     <div id="gridLabels"></div>
     <img id="mapImg" alt="map">
     <div id="meDot"></div>
+    <!-- フィールド外警告 -->
+    <div id="mapWarning">OUT OF FIELD</div>
   </div>
 
   <div id="gps">--.------:--.------</div>
@@ -668,6 +701,12 @@ function buildGridLabels(step = 30) {
   }
 }
 
+/* ============================
+        フィールド外の時
+===============================*/
+
+const mapWarning = document.getElementById("mapWarning");
+  
 /* ==================================================
   GPS SCAN
 ================================================== */
@@ -685,11 +724,28 @@ function scan() {
       gpsEl.textContent = `${lat.toFixed(6)}:${lon.toFixed(6)}`;
 
       const { x, y } = gpsToMapXY(lat, lon);
+
+      const map = document.getElementById("map");
+
+      /* 自分がフィールドの中にいるか判定 */
+      if (x < 0 || y < 0 || x > map.clientWidth || y > map.clientHeight) {
+        meDot.style.display = "none";
+        mapWarning.style.display = "flex";
+        return;
+      }
+
+      /* フィールド内の時 */
+      mapWarning.style.display = "none";
       meDot.style.left = `${x}px`;
       meDot.style.top  = `${y}px`;
       meDot.style.display = "block";
     },
-    () => { gpsEl.textContent = "GPS: 取得失敗"; },
+    () => {
+      gpsEl.textContent = "GPS: 取得失敗";
+      // 失敗時は警告を出すならここ（好み）
+      // meDot.style.display = "none";
+      // mapWarning.style.display = "flex";
+    },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 }

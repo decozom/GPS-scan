@@ -214,6 +214,57 @@ button {
   display:block;
   fill: currentColor;
 }
+
+/* ===============================
+   余白つぶし（#mapは触らない）
+   ※キャリブずれ回避のため mapサイズは変更しない
+================================ */
+
+/* 画面全体の内側余白を少し減らす */
+.screen { padding: 6px; }  /* 10px → 6px */
+
+/* h1/h2 のデフォルト余白がデカいので圧縮 */
+h1, h2{
+  margin: 4px 0 2px;
+  line-height: 1.1;
+}
+
+/* バージョン表記の下余白を減らす */
+.version{
+  margin: 0 0 6px;
+}
+
+/* タイマーの上下余白を詰める（サイズは変えない） */
+#timer{
+  margin: -4px auto 2px;   /* 今より少し上詰め */
+}
+
+/* マップの上下余白を詰める（サイズは触らない） */
+#map{
+  margin: 6px auto 6px;    /* 8px → 6px */
+}
+
+/* GPS表示の上余白を詰める */
+#gps{
+  margin: 4px auto 0;      /* 8px → 4px */
+}
+
+/* アイコン列の上下余白を詰める */
+.icon-row{
+  margin: 6px 0 4px;       /* 10px → 6px */
+  gap: 10px;               /* 12px → 10px（少し詰め） */
+}
+
+/* Settings画面のボタン間隔も少し詰める（全ボタン共通のmarginが効きすぎるので） */
+#settings button,
+#timerSet button{
+  margin: 4px;
+}
+
+/* 入力欄の余白を詰める */
+#timerSet input{
+  margin: 4px 0 0;
+}
 </style>
 </head>
 
@@ -221,7 +272,7 @@ button {
 <!-- === ↓↓↓HTML ================================================================-->
 <div id="main" class="screen active">
   <h1>Field Timer</h1>
-  <div class="version">Version 2.2.3</div> <!-- ==============ヴァージョン====================== -->
+  <div class="version">Version 2.2.4</div> <!-- ==============ヴァージョン====================== -->
   <div id="fieldList">読み込み中…</div>
 
   <div id="pager">

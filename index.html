@@ -270,11 +270,8 @@ button {
  
 <!-- アプリ名 -->
    <h1>Field Timer</h1>
-  <div class="version">Version 2.2.0</div> <!--==============ヴァージョン=============-->
+  <div class="version">Version 2.2.1</div> <!--==============ヴァージョン=============-->
   <div id="fieldList">読み込み中…</div>
-  
-  <!-- フィールド一覧（ここにJSでボタンが入る） -->
-  <div id="fieldList"></div>
 
   <!-- ページ切り替え（フィールドが増えても崩れない） -->
   <div id="pager">
@@ -398,6 +395,7 @@ function toggleStart() {
     if (remainingMs <= 0) remainingMs = setTimeMs;
 
     running = true;
+    setStartStopIcon(true);
     startTimestamp = performance.now();
     lastRemainingMs = remainingMs;
 
@@ -420,6 +418,7 @@ function toggleStart() {
 function stopTimer() {
   running = false;
   clearInterval(timerInterval);
+  serStarStopIcon(fales);
 }
 
 function resetTimer() {
@@ -822,8 +821,7 @@ function scan() {
   起動
 ================================================== */
 updateDisplay(0);
-loadFieldList();
-buildGridLabels(30);
+setStartStopIcon(false);   // ★起動時は▶に固定
 loadFieldList();
 </script>
 

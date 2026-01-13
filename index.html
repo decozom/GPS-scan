@@ -15,17 +15,28 @@ body {
   font-family: "JetBrains Mono", "Source Code Pro", monospace;
 }
 
-.screen { display: none; padding: 10px; }
+.screen { display: none; padding: 6px; }
 .active { display: block; }
 
-.version { font-size: 14px; color: #aaa; }
+/* =========================
+   ▼▼▼ ヴァージョン（ここ！） ▼▼▼
+   ========================= */
+.version { font-size: 14px; color: #aaa; margin: 0 0 6px; }
+/* =========================
+   ▲▲▲ ヴァージョン（ここ！） ▲▲▲
+   ========================= */
+
+h1, h2{
+  margin: 4px 0 2px;
+  line-height: 1.1;
+}
 
 /* ==================================================
    タイマー表示
 ================================================== */
 #timer {
   font-size: 30px;
-  margin: -5px auto 1px;
+  margin: -4px auto 2px;
   width: 280px;
   font-variant-numeric: slashed-zero;
 }
@@ -57,7 +68,7 @@ body {
 #map {
   width: min(96vw,420px);
   height: min(96vw,420px);
-  margin: 8px auto 8px;
+  margin: 6px auto 6px;
   background: #222;
   border: 2px solid #555;
   position: relative;
@@ -89,13 +100,7 @@ body {
   font-variant-numeric: tabular-nums;
   text-shadow: 0 0 2px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8);
 }
-
-.grid-x, .grid-y {
-  position: absolute;
-  background: none;
-  padding: 0;
-  border-radius: 0;
-}
+.grid-x, .grid-y { position: absolute; background: none; padding: 0; border-radius: 0; }
 .grid-x { transform: translateX(-50%); }
 .grid-y { transform: translateY(-50%); }
 
@@ -130,12 +135,41 @@ body {
   display:none;
 }
 
+/* ===============================
+   フィールド外警告表示
+================================ */
+#mapWarning{
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+
+  color: #FF4500; /* red orange */
+  text-shadow:
+    0 0 6px rgba(0,0,0,0.9),
+    0 0 14px rgba(0,0,0,0.7);
+
+  animation: fadeSoft 1.6s infinite;
+  z-index: 8;
+  pointer-events: none;
+}
+@keyframes fadeSoft {
+  0%   { opacity: 0.25; }
+  50%  { opacity: 1.0; }
+  100% { opacity: 0.25; }
+}
+
 /* ==================================================
-   GPS表示
+   GPS表示（固定幅）
 ================================================== */
 #gps {
   font-size: 14px;
-  margin: 8px auto 0;
+  margin: 4px auto 0;
   color: #8cf;
 
   width: 260px;
@@ -157,44 +191,39 @@ body {
 ================================================== */
 #fieldList {
   width: min(92vw, 420px);
-  margin: 12px auto 0;
+  margin: 8px auto 0;
   text-align: left;
   background: #161616;
   border: 1px solid #333;
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 10px;
 }
 
 #fieldList button{
   display:block;
   width: min(92vw, 320px);
-  margin: 8px auto;
+  margin: 6px auto;
   padding: 12px 14px;
   font-size: 18px;
 }
 
-#pager{ margin: 10px 0 6px; }
+#pager{ margin: 8px 0 6px; }
 #pager button{ padding: 8px 14px; }
 #pageInfo{ display:inline-block; min-width: 80px; }
 
 /* ==================================================
    ボタン共通
 ================================================== */
-button {
-  font-size: 16px;
-  padding: 8px 14px;
-  margin: 5px;
-}
+button { font-size: 16px; padding: 8px 14px; margin: 5px; }
 
 /* アイコンボタン */
 .icon-row{
   display:flex;
-  gap:12px;
+  gap:10px;
   justify-content:center;
   align-items:center;
-  margin: 10px 0 6px;
+  margin: 6px 0 4px;
 }
-
 .icon-btn{
   width: 52px;
   height: 52px;
@@ -208,102 +237,32 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 .icon-btn:active{ transform: scale(0.97); }
-.icon-btn svg{
-  width: 28px;
-  height: 28px;
-  display:block;
-  fill: currentColor;
-}
+.icon-btn svg{ width: 28px; height: 28px; display:block; fill: currentColor; }
 
-/* ===============================
-   余白つぶし（#mapは触らない）
-   ※キャリブずれ回避のため mapサイズは変更しない
-================================ */
-
-/* 画面全体の内側余白を少し減らす */
-.screen { padding: 6px; }  /* 10px → 6px */
-
-/* h1/h2 のデフォルト余白がデカいので圧縮 */
-h1, h2{
-  margin: 4px 0 2px;
-  line-height: 1.1;
-}
-
-/* バージョン表記の下余白を減らす */
-.version{
-  margin: 0 0 6px;
-}
-
-/* タイマーの上下余白を詰める（サイズは変えない） */
-#timer{
-  margin: -4px auto 2px;   /* 今より少し上詰め */
-}
-
-/* マップの上下余白を詰める（サイズは触らない） */
-#map{
-  margin: 6px auto 6px;    /* 8px → 6px */
-}
-
-/* GPS表示の上余白を詰める */
-#gps{
-  margin: 4px auto 0;      /* 8px → 4px */
-}
-
-/* アイコン列の上下余白を詰める */
-.icon-row{
-  margin: 6px 0 4px;       /* 10px → 6px */
-  gap: 10px;               /* 12px → 10px（少し詰め） */
-}
-
-/* Settings画面のボタン間隔も少し詰める（全ボタン共通のmarginが効きすぎるので） */
-#settings button,
-#timerSet button{
-  margin: 4px;
-}
-
-/* 入力欄の余白を詰める */
-#timerSet input{
-  margin: 4px 0 0;
-}
-/* ===============================
-   フィールド外警告表示
-================================ */
-#mapWarning{
-  position: absolute;
-  inset: 0;
-  display: none;
-
-  align-items: center;
-  justify-content: center;
-
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-
-  color: #FF4500; /* red orange */
-  text-shadow:
-    0 0 6px rgba(0,0,0,0.9),
-    0 0 14px rgba(0,0,0,0.7);
-
-  animation: fadeSoft 1.6s infinite;
-  z-index: 8;          /* 最前面 */
-  pointer-events: none;
-}
-
-@keyframes fadeSoft {
-  0%   { opacity: 0.25; }
-  50%  { opacity: 1.0; }
-  100% { opacity: 0.25; }
-}
+/* Settings画面のボタン余白 */
+#settings button, #timerSet button{ margin: 4px; }
+#timerSet input{ margin: 4px 0 0; }
 </style>
 </head>
 
 <body>
 <!-- === ↓↓↓HTML ================================================================-->
+
+<!-- ==================================================
+     メイン画面（フィールド選択）
+================================================== -->
 <div id="main" class="screen active">
   <h1>Field Timer</h1>
-  <!-- ヴァージョン　ヴァージョン　ヴァージョン　ヴァージョン　-->
-  <div class="version">Version 2.2.5</div> <!-- ==============ヴァージョン====================== -->
+
+  <!-- =========================
+       ▼▼▼ ヴァージョン（ここ！） ▼▼▼
+       「ここだけ」毎回更新する
+       ========================= -->
+  <div class="version">Version 2.2.6</div>
+  <!-- =========================
+       ▲▲▲ ヴァージョン（ここ！） ▲▲▲
+       ========================= -->
+
   <div id="fieldList">読み込み中…</div>
 
   <div id="pager">
@@ -313,6 +272,9 @@ h1, h2{
   </div>
 </div>
 
+<!-- ==================================================
+     フィールド画面（タイマー＋マップ）
+================================================== -->
 <div id="field" class="screen">
   <h2 id="fieldTitle">Field</h2>
 
@@ -323,6 +285,7 @@ h1, h2{
     <div id="gridLabels"></div>
     <img id="mapImg" alt="map">
     <div id="meDot"></div>
+
     <!-- フィールド外警告 -->
     <div id="mapWarning">OUT OF FIELD</div>
   </div>
@@ -330,20 +293,24 @@ h1, h2{
   <div id="gps">--.------:--.------</div>
 
   <div class="icon-row">
+    <!-- START / STOP（中身はJSで入れる） -->
     <button id="btnStartStop" class="icon-btn" type="button" onclick="toggleStart()" aria-label="Start/Stop"></button>
 
+    <!-- RESET -->
     <button class="icon-btn" type="button" onclick="resetTimer()" aria-label="Reset">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-10.24 4.24l-1.42 1.42A8 8 0 0 0 20 13c0-4.42-3.58-8-8-8z"></path>
       </svg>
     </button>
 
+    <!-- SCAN -->
     <button class="icon-btn" type="button" onclick="scan()" aria-label="GPS Scan">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 8a4 4 0 1 0 .001 8.001A4 4 0 0 0 12 8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 .001-14.001A7 7 0 0 1 12 19z"></path>
       </svg>
     </button>
 
+    <!-- SETTINGS -->
     <button class="icon-btn" type="button" onclick="openSettings()" aria-label="Settings">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.52-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.41 1.05.72 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96c.21.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"></path>
@@ -352,12 +319,18 @@ h1, h2{
   </div>
 </div>
 
+<!-- ==================================================
+     設定画面
+================================================== -->
 <div id="settings" class="screen">
   <h2>Settings</h2>
   <button type="button" onclick="openTimerSet()">タイマーセット</button><br>
   <button type="button" onclick="backToMain()">メイン画面に戻る</button>
 </div>
 
+<!-- ==================================================
+     タイマー設定画面
+================================================== -->
 <div id="timerSet" class="screen">
   <h2>Timer Set (min)</h2>
   <input id="minuteInput" type="number" min="0" value="0">
@@ -419,7 +392,7 @@ function setTimer() {
 
   running = false;
   zeroMode = false;
-  setStartStopIcon(false);     // ★タイマーセット後は▶に戻す
+  setStartStopIcon(false);
   updateDisplay(remainingMs);
 
   show('field');
@@ -431,7 +404,7 @@ function toggleStart() {
 
     running = true;
     zeroMode = false;
-    setStartStopIcon(true);    // ★開始直後に⏸へ
+    setStartStopIcon(true);
 
     startTimestamp = performance.now();
     lastRemainingMs = remainingMs;
@@ -443,14 +416,14 @@ function toggleStart() {
       if (remainingMs === 0) {
         stopTimer();
         zeroMode = true;
-        setStartStopIcon(false); // ★0秒到達でも▶に戻す
+        setStartStopIcon(false);
       }
       updateDisplay(remainingMs);
     }, 50);
 
   } else {
     stopTimer();
-    setStartStopIcon(false);   // ★停止直後に▶へ
+    setStartStopIcon(false);
   }
 }
 
@@ -464,7 +437,7 @@ function resetTimer() {
   stopTimer();
   zeroMode = false;
   remainingMs = setTimeMs;
-  setStartStopIcon(false);     // ★リセットでも▶へ
+  setStartStopIcon(false);
   updateDisplay(remainingMs);
 }
 
@@ -496,7 +469,7 @@ function updateDisplay(ms) {
 }
 
 /* ==================================================
-  フィールドJSON読み込み（ページング版だけ残す）
+  フィールドJSON読み込み（ページング版）
 ================================================== */
 let currentField = null;
 let H = null;
@@ -505,6 +478,7 @@ let lat0 = 0, lon0 = 0, cosLat0 = 1;
 const mapImg = document.getElementById("mapImg");
 const meDot  = document.getElementById("meDot");
 const gpsEl  = document.getElementById("gps");
+const mapWarning = document.getElementById("mapWarning");
 
 let fieldListData = [];
 let currentPage = 0;
@@ -582,11 +556,13 @@ async function openFieldByFile(file) {
     setStartStopIcon(false);
     updateDisplay(0);
 
+    // 画像＆初期表示
     document.documentElement.style.setProperty("--imgScale", String(data.defaultImgScale ?? 1.0));
     mapImg.src = data.image;
 
     gpsEl.textContent = "--.------:--.------";
     meDot.style.display = "none";
+    mapWarning.style.display = "none";
 
     prepareTransform(data.anchors);
 
@@ -701,14 +677,29 @@ function buildGridLabels(step = 30) {
   }
 }
 
-/* ============================
-        フィールド外の時
-===============================*/
-
-const mapWarning = document.getElementById("mapWarning");
-  
 /* ==================================================
-  GPS SCAN
+  ① 表示（UI切替）だけを担当：OUT / meDot
+================================================== */
+function setOutOfField(on) {
+  mapWarning.style.display = on ? "flex" : "none";
+  meDot.style.display = on ? "none" : "block";
+}
+
+function setMeDot(x, y) {
+  meDot.style.left = `${x}px`;
+  meDot.style.top  = `${y}px`;
+}
+
+/* ==================================================
+  ② 判定だけを担当：マップ内かどうか（副作用なし）
+================================================== */
+function isInsideMap(x, y) {
+  const map = document.getElementById("map");
+  return !(x < 0 || y < 0 || x > map.clientWidth || y > map.clientHeight);
+}
+
+/* ==================================================
+  ③ GPS SCAN（取得 → 変換 → 判定 → 表示）
 ================================================== */
 function scan() {
   if (!currentField || !H) { gpsEl.textContent = "先にフィールド選択"; return; }
@@ -721,30 +712,28 @@ function scan() {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
+      // 表示（固定桁）
       gpsEl.textContent = `${lat.toFixed(6)}:${lon.toFixed(6)}`;
 
+      // 変換
       const { x, y } = gpsToMapXY(lat, lon);
 
-      const map = document.getElementById("map");
+      // 判定（ここではUIを触らない）
+      const inside = isInsideMap(x, y);
 
-      /* 自分がフィールドの中にいるか判定 */
-      if (x < 0 || y < 0 || x > map.clientWidth || y > map.clientHeight) {
-        meDot.style.display = "none";
-        mapWarning.style.display = "flex";
+      // 表示（ここだけでUIを制御）
+      if (!inside) {
+        setOutOfField(true);
         return;
       }
 
-      /* フィールド内の時 */
-      mapWarning.style.display = "none";
-      meDot.style.left = `${x}px`;
-      meDot.style.top  = `${y}px`;
-      meDot.style.display = "block";
+      setMeDot(x, y);
+      setOutOfField(false);
     },
     () => {
       gpsEl.textContent = "GPS: 取得失敗";
-      // 失敗時は警告を出すならここ（好み）
-      // meDot.style.display = "none";
-      // mapWarning.style.display = "flex";
+      // 失敗時に警告を出したいなら：
+      // setOutOfField(true);
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );

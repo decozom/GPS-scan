@@ -193,6 +193,26 @@ body {
 .fieldName { font-size: 14px; color: #e8e8e8; }
 .fieldId   { font-size: 12px; color: #888; }
 
+/* フィールド一覧ボタン */
+#fieldList button{
+  display:block;
+  width: min(92vw, 320px);
+  margin: 8px auto;
+  padding: 12px 14px;
+  font-size: 18px;
+}
+
+/* ページャ */
+#pager{
+  margin: 10px 0 6px;
+}
+#pager button{
+  padding: 8px 14px;
+}
+#pageInfo{
+  display:inline-block;
+  min-width: 80px;
+}
 /* ==================================================
    ボタン共通
 ================================================== */
@@ -210,9 +230,21 @@ button {
      メイン画面（フィールド選択）
 ================================================== -->
 <div id="main" class="screen active">
-  <h1>Field Timer</h1>
-  <div class="version">Version 2.1.8</div> <!--==============ヴァージョン=============-->
+ 
+<!-- アプリ名 -->
+   <h1>Field Timer</h1>
+  <div class="version">Version 2.2.0</div> <!--==============ヴァージョン=============-->
   <div id="fieldList">読み込み中…</div>
+  
+  <!-- フィールド一覧（ここにJSでボタンが入る） -->
+  <div id="fieldList"></div>
+
+  <!-- ページ切り替え（フィールドが増えても崩れない） -->
+  <div id="pager">
+    <button type="button" onclick="prevPage()">◀</button>
+    <span id="pageInfo">- / -</span>
+    <button type="button" onclick="nextPage()">▶</button>
+  </div>
 </div>
 
 <!-- ==================================================
@@ -467,6 +499,92 @@ async function openFieldByFile(file) {
 }
 
 /* ==================================================
+   フィールドリスト（メイン画面に表示）
+   ・fields/fields.json を読み込む
+   ・フィールド名をボタン表示
+   ・押したら openFieldByFile(file) でマップへ
+   ・増えても崩れないようにページング
+================================================== */
+
+// fields.json の内容が入る
+let fieldListData = [];
+
+// 現在ページ（0スタート）
+let currentPage = 0;
+
+// 1ページに表示する数（好みで変更OK）
+const FIELDS_PER_PAGE = 6;
+
+/* fields/fields.json を読み込む */
+async function loadFieldList() {
+  try {
+    const res = await fetch("fields/fields.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("fields.json not found");
+
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error("fields.json is not array");
+
+    fieldListData = data;
+    currentPage = 0;
+    renderFieldList();
+
+  } catch (e) {
+    console.error(e);
+    alert("フィールド一覧読み込み失敗：fields/fields.json を確認して");
+  }
+}
+
+/* メイン画面にボタンを描画 */
+function renderFieldList() {
+  const list = document.getElementById("fieldList");
+  const pageInfo = document.getElementById("pageInfo");
+
+  if (!list || !pageInfo) return;
+
+  list.innerHTML = "";
+
+  const total = fieldListData.length;
+  const totalPages = Math.max(1, Math.ceil(total / FIELDS_PER_PAGE));
+
+  // 範囲計算
+  const start = currentPage * FIELDS_PER_PAGE;
+  const end = Math.min(start + FIELDS_PER_PAGE, total);
+
+  // ボタン生成
+  for (let i = start; i < end; i++) {
+    const f = fieldListData[i];
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = f.name ?? f.id ?? f.file ?? "field";
+
+    // クリックしたら即マップへ
+    btn.onclick = () => openFieldByFile(f.file);
+
+    list.appendChild(btn);
+  }
+
+  // ページ情報
+  pageInfo.textContent = `${currentPage + 1} / ${totalPages}`;
+}
+
+/* 次ページ */
+function nextPage() {
+  const totalPages = Math.max(1, Math.ceil(fieldListData.length / FIELDS_PER_PAGE));
+  if (currentPage < totalPages - 1) {
+    currentPage++;
+    renderFieldList();
+  }
+}
+
+/* 前ページ */
+function prevPage() {
+  if (currentPage > 0) {
+    currentPage--;
+    renderFieldList();
+  }
+}
+/* ==================================================
   4点GPS → マップXY（ホモグラフィ）
 ================================================== */
 const R = 6378137;
@@ -619,6 +737,7 @@ function scan() {
 updateDisplay(0);
 loadFieldList();
 buildGridLabels(30);
+loadFieldList();
 </script>
 
 </body>

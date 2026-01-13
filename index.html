@@ -7,15 +7,11 @@
 
 <style>
 /* ===  ↓↓↓CSS ===================================================================== */
-/* ==================================================
-   全体共通設定
-================================================== */
 body {
   margin: 0;
   background: #111;
   color: #eee;
   text-align: center;
-  /* フォント固定（斜線入り0が使える） */
   font-family: "JetBrains Mono", "Source Code Pro", monospace;
 }
 
@@ -30,8 +26,8 @@ body {
 #timer {
   font-size: 30px;
   margin: -5px auto 1px;
-  width: 280px; /* 数字ズレ防止 */
-  font-variant-numeric: slashed-zero; /* 斜線入り0 */
+  width: 280px;
+  font-variant-numeric: slashed-zero;
 }
 
 /* 3分以下：red orange */
@@ -77,8 +73,9 @@ body {
     linear-gradient(to right, rgba(0,220,255,0.75) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0,220,255,0.75) 1px, transparent 1px);
   pointer-events: none;
-  z-index: 3;                /* マップより前に表示 */
+  z-index: 3;
 }
+
 /* グリッドラベル */
 #gridLabels {
   position: absolute;
@@ -93,27 +90,16 @@ body {
   text-shadow: 0 0 2px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8);
 }
 
-/* マス内に収める（線と重ならない） */
 .grid-x, .grid-y {
   position: absolute;
   background: none;
   padding: 0;
   border-radius: 0;
 }
+.grid-x { transform: translateX(-50%); }
+.grid-y { transform: translateY(-50%); }
 
-/* 1行目：上から少し下げてマス内へ */
-.grid-x {
- position: absolute;
- transform: translateX(-50%);
-}
-
-/* 1列目：左から少し右へ */
-.grid-y {
- position: absolute;   
- transform: translateY(-50%);
-}
-
-/* マップ画像（中央配置＋スケール） */
+/* マップ画像 */
 #mapImg {
   position: absolute;
   left: 50%;
@@ -126,7 +112,7 @@ body {
   -webkit-user-drag: none;
   pointer-events: none;
   opacity: 0.9;
-  z-index: 1;   /*グリッドより下に表示*/
+  z-index: 1;
 }
 
 /* 自分の位置ドット */
@@ -140,13 +126,12 @@ body {
   box-shadow: 0 0 0 2px rgba(0,0,0,0.35);
   transform: translate(-50%, -50%);
   pointer-events:none;
-  z-index: 5;      /* 最前面に表示 */
+  z-index: 5;
   display:none;
-  
 }
 
 /* ==================================================
-   GPS表示（固定幅でガタつき防止）
+   GPS表示
 ================================================== */
 #gps {
   font-size: 14px;
@@ -180,20 +165,6 @@ body {
   padding: 10px 12px;
 }
 
-.fieldItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 8px;
-  border-bottom: 1px dashed #2a2a2a;
-}
-.fieldItem:last-child { border-bottom: none; }
-
-.fieldName { font-size: 14px; color: #e8e8e8; }
-.fieldId   { font-size: 12px; color: #888; }
-
-/* フィールド一覧ボタン */
 #fieldList button{
   display:block;
   width: min(92vw, 320px);
@@ -202,17 +173,10 @@ body {
   font-size: 18px;
 }
 
-/* ページャ */
-#pager{
-  margin: 10px 0 6px;
-}
-#pager button{
-  padding: 8px 14px;
-}
-#pageInfo{
-  display:inline-block;
-  min-width: 80px;
-}
+#pager{ margin: 10px 0 6px; }
+#pager button{ padding: 8px 14px; }
+#pageInfo{ display:inline-block; min-width: 80px; }
+
 /* ==================================================
    ボタン共通
 ================================================== */
@@ -222,9 +186,7 @@ button {
   margin: 5px;
 }
 
-/* ===============================
-   アイコンボタン共通
-================================ */
+/* アイコンボタン */
 .icon-row{
   display:flex;
   gap:12px;
@@ -239,41 +201,29 @@ button {
   border-radius: 14px;
   border: 2px solid rgba(0,220,255,0.35);
   background: rgba(255,255,255,0.04);
-  color: rgba(0,220,255,0.95);      /* アイコン色（シアン） */
+  color: rgba(0,220,255,0.95);
   display:flex;
   align-items:center;
   justify-content:center;
   -webkit-tap-highlight-color: transparent;
 }
-
-.icon-btn:active{
-  transform: scale(0.97);
-}
-
+.icon-btn:active{ transform: scale(0.97); }
 .icon-btn svg{
   width: 28px;
   height: 28px;
   display:block;
   fill: currentColor;
 }
-
-/* タップしやすさ優先（小さめにしたいなら数値下げてOK） */
 </style>
 </head>
 
 <body>
 <!-- === ↓↓↓HTML ================================================================-->
-<!-- ==================================================
-     メイン画面（フィールド選択）
-================================================== -->
 <div id="main" class="screen active">
- 
-<!-- アプリ名 -->
-   <h1>Field Timer</h1>
-  <div class="version">Version 2.2.1</div> <!--==============ヴァージョン=============-->
+  <h1>Field Timer</h1>
+  <div class="version">Version 2.2.3</div> <!-- ==============ヴァージョン====================== -->
   <div id="fieldList">読み込み中…</div>
 
-  <!-- ページ切り替え（フィールドが増えても崩れない） -->
   <div id="pager">
     <button type="button" onclick="prevPage()">◀</button>
     <span id="pageInfo">- / -</span>
@@ -281,17 +231,14 @@ button {
   </div>
 </div>
 
-<!-- ==================================================
-     フィールド画面（タイマー＋マップ）
-================================================== -->
 <div id="field" class="screen">
   <h2 id="fieldTitle">Field</h2>
 
   <div id="timer">00:00</div>
 
   <div id="map">
-    <div class="grid"></div> 
-    <div id="gridLabels"></div> <!-- グリッドラベル-->
+    <div class="grid"></div>
+    <div id="gridLabels"></div>
     <img id="mapImg" alt="map">
     <div id="meDot"></div>
   </div>
@@ -299,51 +246,34 @@ button {
   <div id="gps">--.------:--.------</div>
 
   <div class="icon-row">
+    <button id="btnStartStop" class="icon-btn" type="button" onclick="toggleStart()" aria-label="Start/Stop"></button>
 
-  <!-- START / STOP（JSでアイコン切り替え） -->
-  <button id="btnStartStop" class="icon-btn" type="button" onclick="toggleStart()" aria-label="Start/Stop">
-    <!-- play_arrow -->
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 5v14l11-7z"></path>
-    </svg>
-  </button>
+    <button class="icon-btn" type="button" onclick="resetTimer()" aria-label="Reset">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-10.24 4.24l-1.42 1.42A8 8 0 0 0 20 13c0-4.42-3.58-8-8-8z"></path>
+      </svg>
+    </button>
 
-  <!-- RESET：replay -->
-  <button class="icon-btn" type="button" onclick="resetTimer()" aria-label="Reset">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-10.24 4.24l-1.42 1.42A8 8 0 0 0 20 13c0-4.42-3.58-8-8-8z"></path>
-    </svg>
-  </button>
+    <button class="icon-btn" type="button" onclick="scan()" aria-label="GPS Scan">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 8a4 4 0 1 0 .001 8.001A4 4 0 0 0 12 8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 .001-14.001A7 7 0 0 1 12 19z"></path>
+      </svg>
+    </button>
 
-  <!-- SCAN：my_location -->
-  <button class="icon-btn" type="button" onclick="scan()" aria-label="GPS Scan">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 8a4 4 0 1 0 .001 8.001A4 4 0 0 0 12 8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 .001-14.001A7 7 0 0 1 12 19z"></path>
-    </svg>
-  </button>
-
-  <!-- SETTINGS：settings -->
-  <button class="icon-btn" type="button" onclick="openSettings()" aria-label="Settings">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.52-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.41 1.05.72 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96c.21.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"></path>
-    </svg>
-  </button>
-
-</div>
+    <button class="icon-btn" type="button" onclick="openSettings()" aria-label="Settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.52-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.41 1.05.72 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96c.21.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"></path>
+      </svg>
+    </button>
+  </div>
 </div>
 
-<!-- ==================================================
-     設定画面
-================================================== -->
 <div id="settings" class="screen">
   <h2>Settings</h2>
   <button type="button" onclick="openTimerSet()">タイマーセット</button><br>
   <button type="button" onclick="backToMain()">メイン画面に戻る</button>
 </div>
 
-<!-- ==================================================
-     タイマー設定画面
-================================================== -->
 <div id="timerSet" class="screen">
   <h2>Timer Set (min)</h2>
   <input id="minuteInput" type="number" min="0" value="0">
@@ -361,32 +291,53 @@ function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-
 function backToMain()   { show('main'); }
 function openSettings() { show('settings'); }
 function openTimerSet() { show('timerSet'); }
 
+/* ==========================================================
+   START/STOP アイコン切替
+========================================================== */
+function setStartStopIcon(isRunning){
+  const btn = document.getElementById("btnStartStop");
+  if (!btn) return;
+
+  const pauseSvg = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+    </svg>`;
+  const playSvg = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 5v14l11-7z"></path>
+    </svg>`;
+
+  btn.innerHTML = isRunning ? pauseSvg : playSvg;
+}
+
 /* ==================================================
   タイマー関連（実時間差分方式）
 ================================================== */
-let setTimeMs = 0;        // 設定された時間
-let remainingMs = 0;      // 残り
-let running = false;      // 動作中
-let zeroMode = false;     // 0秒フェード点滅状態
+let setTimeMs = 0;
+let remainingMs = 0;
+let running = false;
+let zeroMode = false;
 
 let timerInterval = null;
 let startTimestamp = 0;
 let lastRemainingMs = 0;
 
 function setTimer() {
-  document.activeElement.blur(); // iOSキーボード対策
+  document.activeElement.blur();
   const min = Number(document.getElementById('minuteInput').value);
 
   setTimeMs = min * 60 * 1000;
   remainingMs = setTimeMs;
 
+  running = false;
   zeroMode = false;
+  setStartStopIcon(false);     // ★タイマーセット後は▶に戻す
   updateDisplay(remainingMs);
+
   show('field');
 }
 
@@ -395,7 +346,9 @@ function toggleStart() {
     if (remainingMs <= 0) remainingMs = setTimeMs;
 
     running = true;
-    setStartStopIcon(true);
+    zeroMode = false;
+    setStartStopIcon(true);    // ★開始直後に⏸へ
+
     startTimestamp = performance.now();
     lastRemainingMs = remainingMs;
 
@@ -405,26 +358,29 @@ function toggleStart() {
 
       if (remainingMs === 0) {
         stopTimer();
-        zeroMode = true; // 0秒フェード点滅へ
+        zeroMode = true;
+        setStartStopIcon(false); // ★0秒到達でも▶に戻す
       }
       updateDisplay(remainingMs);
     }, 50);
 
   } else {
     stopTimer();
+    setStartStopIcon(false);   // ★停止直後に▶へ
   }
 }
 
 function stopTimer() {
   running = false;
   clearInterval(timerInterval);
-  serStarStopIcon(fales);
+  timerInterval = null;
 }
 
 function resetTimer() {
   stopTimer();
   zeroMode = false;
   remainingMs = setTimeMs;
+  setStartStopIcon(false);     // ★リセットでも▶へ
   updateDisplay(remainingMs);
 }
 
@@ -432,20 +388,17 @@ function updateDisplay(ms) {
   const t = document.getElementById("timer");
   t.classList.remove("red", "blink", "zero-blink");
 
-  // 起動直後（0で点滅なし）
   if (!running && !zeroMode && ms === 0) {
     t.textContent = "00:00";
     return;
   }
 
-  // 0秒モード（リセットまで継続）
   if (zeroMode) {
     t.classList.add("zero-blink");
     t.textContent = "00:00:00";
     return;
   }
 
-  // 3分以下で赤orange、30秒以下で点滅
   if (ms <= 180000) t.classList.add("red");
   if (ms <= 30000)  t.classList.add("blink");
 
@@ -459,61 +412,68 @@ function updateDisplay(ms) {
 }
 
 /* ==================================================
-  フィールドJSON読み込み
+  フィールドJSON読み込み（ページング版だけ残す）
 ================================================== */
 let currentField = null;
-let H = null;        // ホモグラフィ係数
+let H = null;
 let lat0 = 0, lon0 = 0, cosLat0 = 1;
 
 const mapImg = document.getElementById("mapImg");
 const meDot  = document.getElementById("meDot");
 const gpsEl  = document.getElementById("gps");
 
+let fieldListData = [];
+let currentPage = 0;
+const FIELDS_PER_PAGE = 6;
+
 async function loadFieldList() {
-  const box = document.getElementById("fieldList");
   try {
     const res = await fetch("fields/fields.json", { cache: "no-store" });
     if (!res.ok) throw new Error("fields.json not found");
-    const list = await res.json();
 
-    if (!Array.isArray(list) || list.length === 0) {
-      box.textContent = "fields/fields.json が空です";
-      return;
-    }
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error("fields.json is not array");
 
-    box.innerHTML = "";
-    list.forEach(item => {
-      const row = document.createElement("div");
-      row.className = "fieldItem";
-
-      const left = document.createElement("div");
-      left.innerHTML =
-        `<div class="fieldName">${escapeHtml(item.name || item.id)}</div>
-         <div class="fieldId">${escapeHtml(item.id || "")}</div>`;
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = "選択";
-      btn.onclick = () => openFieldByFile(item.file);
-
-      row.appendChild(left);
-      row.appendChild(btn);
-      box.appendChild(row);
-    });
+    fieldListData = data;
+    currentPage = 0;
+    renderFieldList();
 
   } catch (e) {
-    box.textContent = "フィールド一覧の読み込み失敗（fields/fields.json を確認）";
     console.error(e);
+    document.getElementById("fieldList").textContent = "フィールド一覧読み込み失敗：fields/fields.json を確認して";
   }
 }
 
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+function renderFieldList() {
+  const list = document.getElementById("fieldList");
+  const pageInfo = document.getElementById("pageInfo");
+  if (!list || !pageInfo) return;
+
+  list.innerHTML = "";
+
+  const total = fieldListData.length;
+  const totalPages = Math.max(1, Math.ceil(total / FIELDS_PER_PAGE));
+  const start = currentPage * FIELDS_PER_PAGE;
+  const end = Math.min(start + FIELDS_PER_PAGE, total);
+
+  for (let i = start; i < end; i++) {
+    const f = fieldListData[i];
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = f.name ?? f.id ?? f.file ?? "field";
+    btn.onclick = () => openFieldByFile(f.file);
+    list.appendChild(btn);
+  }
+
+  pageInfo.textContent = `${currentPage + 1} / ${totalPages}`;
+}
+
+function nextPage() {
+  const totalPages = Math.max(1, Math.ceil(fieldListData.length / FIELDS_PER_PAGE));
+  if (currentPage < totalPages - 1) { currentPage++; renderFieldList(); }
+}
+function prevPage() {
+  if (currentPage > 0) { currentPage--; renderFieldList(); }
 }
 
 async function openFieldByFile(file) {
@@ -530,31 +490,24 @@ async function openFieldByFile(file) {
     currentField = data;
     document.getElementById("fieldTitle").textContent = data.name || data.id || "Field";
 
-    // フィールド読み込み時：タイマーは0初期（必要なら変更OK）
+    // フィールド読み込み時：タイマー初期化
     setTimeMs = 0;
     remainingMs = 0;
     running = false;
     zeroMode = false;
+    setStartStopIcon(false);
     updateDisplay(0);
 
-    // 画像セット
     document.documentElement.style.setProperty("--imgScale", String(data.defaultImgScale ?? 1.0));
     mapImg.src = data.image;
 
-    // GPS表示初期化（固定幅）
     gpsEl.textContent = "--.------:--.------";
-
-    // 現在地ドット非表示
     meDot.style.display = "none";
 
-    // 4点変換準備
-   prepareTransform(data.anchors);
+    prepareTransform(data.anchors);
 
-　　show("field");
-
-　　// 表示後にマップサイズが確定してからグリッドラベル生成
-　　requestAnimationFrame(() => buildGridLabels(30));
-
+    show("field");
+    requestAnimationFrame(() => buildGridLabels(30));
 
   } catch (e) {
     alert("フィールド読み込み失敗。fieldsフォルダとjsonを確認して。");
@@ -562,92 +515,6 @@ async function openFieldByFile(file) {
   }
 }
 
-/* ==================================================
-   フィールドリスト（メイン画面に表示）
-   ・fields/fields.json を読み込む
-   ・フィールド名をボタン表示
-   ・押したら openFieldByFile(file) でマップへ
-   ・増えても崩れないようにページング
-================================================== */
-
-// fields.json の内容が入る
-let fieldListData = [];
-
-// 現在ページ（0スタート）
-let currentPage = 0;
-
-// 1ページに表示する数（好みで変更OK）
-const FIELDS_PER_PAGE = 6;
-
-/* fields/fields.json を読み込む */
-async function loadFieldList() {
-  try {
-    const res = await fetch("fields/fields.json", { cache: "no-store" });
-    if (!res.ok) throw new Error("fields.json not found");
-
-    const data = await res.json();
-    if (!Array.isArray(data)) throw new Error("fields.json is not array");
-
-    fieldListData = data;
-    currentPage = 0;
-    renderFieldList();
-
-  } catch (e) {
-    console.error(e);
-    alert("フィールド一覧読み込み失敗：fields/fields.json を確認して");
-  }
-}
-
-/* メイン画面にボタンを描画 */
-function renderFieldList() {
-  const list = document.getElementById("fieldList");
-  const pageInfo = document.getElementById("pageInfo");
-
-  if (!list || !pageInfo) return;
-
-  list.innerHTML = "";
-
-  const total = fieldListData.length;
-  const totalPages = Math.max(1, Math.ceil(total / FIELDS_PER_PAGE));
-
-  // 範囲計算
-  const start = currentPage * FIELDS_PER_PAGE;
-  const end = Math.min(start + FIELDS_PER_PAGE, total);
-
-  // ボタン生成
-  for (let i = start; i < end; i++) {
-    const f = fieldListData[i];
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = f.name ?? f.id ?? f.file ?? "field";
-
-    // クリックしたら即マップへ
-    btn.onclick = () => openFieldByFile(f.file);
-
-    list.appendChild(btn);
-  }
-
-  // ページ情報
-  pageInfo.textContent = `${currentPage + 1} / ${totalPages}`;
-}
-
-/* 次ページ */
-function nextPage() {
-  const totalPages = Math.max(1, Math.ceil(fieldListData.length / FIELDS_PER_PAGE));
-  if (currentPage < totalPages - 1) {
-    currentPage++;
-    renderFieldList();
-  }
-}
-
-/* 前ページ */
-function prevPage() {
-  if (currentPage > 0) {
-    currentPage--;
-    renderFieldList();
-  }
-}
 /* ==================================================
   4点GPS → マップXY（ホモグラフィ）
 ================================================== */
@@ -692,12 +559,10 @@ function computeHomography(anchors) {
     const { X, Y } = latLonToLocalMeters(p.lat, p.lon);
     const x = p.x, y = p.y;
 
-    // x式
     A.push([X, Y, 1, 0, 0, 0, -x*X, -x*Y]); b.push(x);
-    // y式
     A.push([0, 0, 0, X, Y, 1, -y*X, -y*Y]); b.push(y);
   }
-  return solveLinear(A, b); // [h11..h32], h33=1
+  return solveLinear(A, b);
 }
 
 function prepareTransform(anchors) {
@@ -716,9 +581,10 @@ function gpsToMapXY(lat, lon) {
   const y = (h21*X + h22*Y + h23) / denom;
   return { x, y };
 }
+
 /* ==================================================
-      グリッドラベル表示　1,2,3,.... A,B,C,...
-=====================================================*/
+  グリッドラベル
+================================================== */
 function buildGridLabels(step = 30) {
   const box = document.getElementById("gridLabels");
   if (!box) return;
@@ -731,68 +597,32 @@ function buildGridLabels(step = 30) {
   const cols = Math.floor(w / step);
   const rows = Math.floor(h / step);
 
-  // ===== 横：A,B,C…（2マス目から）=====
   for (let col = 1; col < cols; col++) {
     const d = document.createElement("div");
     d.className = "grid-x";
-
-    // マス中央
     d.style.left = `${col * step + step / 2}px`;
     d.style.top  = `${step * 0.25}px`;
-
-    const idx = col - 1; // Aから
+    const idx = col - 1;
     d.textContent = String.fromCharCode(65 + idx);
     box.appendChild(d);
   }
 
-  // ===== 縦：1,2,3…（2マス目から）=====
   for (let row = 1; row < rows; row++) {
     const d = document.createElement("div");
     d.className = "grid-y";
-
     d.style.left = `${step * 0.25}px`;
     d.style.top  = `${row * step + step / 2}px`;
-
     d.textContent = row;
     box.appendChild(d);
   }
 }
 
-/* ==========================================================
-            操作ボタンのあれこれ
-========================================================== */
-function setStartStopIcon(isRunning){
-  const btn = document.getElementById("btnStartStop");
-  if (!btn) return;
-
-  // pause
-  const pauseSvg = `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
-    </svg>`;
-
-  // play_arrow
-  const playSvg = `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 5v14l11-7z"></path>
-    </svg>`;
-
-  btn.innerHTML = isRunning ? pauseSvg : playSvg;
-}
 /* ==================================================
   GPS SCAN
-  ※ getCurrentPosition は非同期。タイマーは止めないが、
-     端末負荷で一瞬カクつくことはあり得る（Safariあるある）
 ================================================== */
 function scan() {
-  if (!currentField || !H) {
-    gpsEl.textContent = "先にフィールド選択";
-    return;
-  }
-  if (!navigator.geolocation) {
-    gpsEl.textContent = "GPS: 非対応端末";
-    return;
-  }
+  if (!currentField || !H) { gpsEl.textContent = "先にフィールド選択"; return; }
+  if (!navigator.geolocation) { gpsEl.textContent = "GPS: 非対応端末"; return; }
 
   gpsEl.textContent = "取得中...";
 
@@ -801,18 +631,14 @@ function scan() {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
-      // 表示（固定桁でガタつき防止）
       gpsEl.textContent = `${lat.toFixed(6)}:${lon.toFixed(6)}`;
 
-      // マップXYへ変換してドット表示
       const { x, y } = gpsToMapXY(lat, lon);
       meDot.style.left = `${x}px`;
       meDot.style.top  = `${y}px`;
       meDot.style.display = "block";
     },
-    () => {
-      gpsEl.textContent = "GPS: 取得失敗";
-    },
+    () => { gpsEl.textContent = "GPS: 取得失敗"; },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 }
@@ -821,7 +647,7 @@ function scan() {
   起動
 ================================================== */
 updateDisplay(0);
-setStartStopIcon(false);   // ★起動時は▶に固定
+setStartStopIcon(false);
 loadFieldList();
 </script>
 

@@ -221,6 +221,43 @@ button {
   padding: 8px 14px;
   margin: 5px;
 }
+
+/* ===============================
+   アイコンボタン共通
+================================ */
+.icon-row{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  align-items:center;
+  margin: 10px 0 6px;
+}
+
+.icon-btn{
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 2px solid rgba(0,220,255,0.35);
+  background: rgba(255,255,255,0.04);
+  color: rgba(0,220,255,0.95);      /* アイコン色（シアン） */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:active{
+  transform: scale(0.97);
+}
+
+.icon-btn svg{
+  width: 28px;
+  height: 28px;
+  display:block;
+  fill: currentColor;
+}
+
+/* タップしやすさ優先（小さめにしたいなら数値下げてOK） */
 </style>
 </head>
 
@@ -264,10 +301,38 @@ button {
 
   <div id="gps">--.------:--.------</div>
 
-  <button type="button" onclick="toggleStart()">START / STOP</button>
-  <button type="button" onclick="resetTimer()">RESET</button>
-  <button type="button" onclick="scan()">SCAN</button>
-  <button type="button" onclick="openSettings()">SETTINGS</button>
+  <div class="icon-row">
+
+  <!-- START / STOP（JSでアイコン切り替え） -->
+  <button id="btnStartStop" class="icon-btn" type="button" onclick="toggleStart()" aria-label="Start/Stop">
+    <!-- play_arrow -->
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 5v14l11-7z"></path>
+    </svg>
+  </button>
+
+  <!-- RESET：replay -->
+  <button class="icon-btn" type="button" onclick="resetTimer()" aria-label="Reset">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-10.24 4.24l-1.42 1.42A8 8 0 0 0 20 13c0-4.42-3.58-8-8-8z"></path>
+    </svg>
+  </button>
+
+  <!-- SCAN：my_location -->
+  <button class="icon-btn" type="button" onclick="scan()" aria-label="GPS Scan">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 8a4 4 0 1 0 .001 8.001A4 4 0 0 0 12 8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 .001-14.001A7 7 0 0 1 12 19z"></path>
+    </svg>
+  </button>
+
+  <!-- SETTINGS：settings -->
+  <button class="icon-btn" type="button" onclick="openSettings()" aria-label="Settings">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.52-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.41 1.05.72 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96c.21.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"></path>
+    </svg>
+  </button>
+
+</div>
 </div>
 
 <!-- ==================================================
@@ -692,6 +757,28 @@ function buildGridLabels(step = 30) {
     d.textContent = row;
     box.appendChild(d);
   }
+}
+
+/* ==========================================================
+            操作ボタンのあれこれ
+========================================================== */
+function setStartStopIcon(isRunning){
+  const btn = document.getElementById("btnStartStop");
+  if (!btn) return;
+
+  // pause
+  const pauseSvg = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+    </svg>`;
+
+  // play_arrow
+  const playSvg = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 5v14l11-7z"></path>
+    </svg>`;
+
+  btn.innerHTML = isRunning ? pauseSvg : playSvg;
 }
 /* ==================================================
   GPS SCAN

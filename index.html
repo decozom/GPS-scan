@@ -136,96 +136,32 @@ h1, h2{
 }
    
 /* ===============================
-   フィールド外警告（フェード）
+   フィールド外警告（最終・シンプル版）
 ================================ */
 #mapWarning{
   position: absolute;
   inset: 0;
   display: none;
+
   align-items: center;
   justify-content: center;
 
-  font-size: 25px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.16em;
-  color: #ff4528;
 
+  color: #ff4528;   /* red-orange */
+  text-shadow: none;
+
+  animation: evaFade 1.4s infinite;
   z-index: 8;
   pointer-events: none;
-
-  animation: evaFade 1.3s infinite;
 }
 
-/* 動かさない・フェードのみ */
 @keyframes evaFade {
-  0%   { opacity: 0.4; }
-  50%  { opacity: 1; }
-  100% { opacity: 0.25; }
-}
-
-/* 上下スラッシュ（疑似要素） */
-#mapWarning::before,
-#mapWarning::after{
-  content: "////////////////////////////////////////////////////////////////////////////////////////////////";
-  position: absolute;
-  left: 50%;
-  white-space: nowrap;
-
-  font-size: 26px;       /* 極太感 */
-  font-weight: 950;
-  letter-spacing: 0.10em; /* 詰めて線っぽく */
-  color: #ff4528;
-  opacity: 0.95;
-
-  /* ★ここが動き本体 */
-  animation: slashSlide 1.0s linear infinite;
-}
-
-/* 上の線：左へ流す */
-#mapWarning::before{
-  top: 38%;
-  animation-direction: reverse;
-}
-
-/* 下の線：右へ流す */
-#mapWarning::after{
-  top: 62%;
-  animation-direction: normal;
-}
-
-/* ★スラッシュ移動（左右に流れる + 縦を短くして横長感） */
-@keyframes slashSlide{
-  0%   { transform: translateX(-50%) translateX(-120px) scaleY(0.35); }
-  100% { transform: translateX(-50%) translateX( 120px) scaleY(0.35); }
-}
-
-/* ===============================
-   赤いスキャンライン
-================================ */
-#mapScanLine{
-  position: absolute;
-  inset: 0;
-  display: none;
-  z-index: 8;
-  
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      rgba(255,70,40,0.08),
-      rgba(255,70,40,0.08) 1px,
-      transparent 1px,
-      transparent 6px
-    );
-
-  animation: scanMove 2.2s linear infinite;
-  
-  pointer-events: none;
-}
-
-/* ゆっくり流れるだけ */
-@keyframes scanMove{
-  from { background-position: 0 0; }
-  to   { background-position: 0 60px; }
+  0%   { opacity: 0.35; }
+  50%  { opacity: 1.0; }
+  100% { opacity: 0.35; }
 }
 
 /* ==================================================
@@ -322,7 +258,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
        ▼▼▼ ヴァージョン（ここ！） ▼▼▼
        「ここだけ」毎回更新する
        ========================= -->
-  <div class="version">Version 2.3.8</div>
+  <div class="version">Version 2.3.9</div>
   <!-- =========================
        ▲▲▲ ヴァージョン（ここ！） ▲▲▲
        ========================= -->
@@ -353,7 +289,6 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
     <!-- フィールド外警告 -->
     <div id="mapWarning">//OUT OF FIELD//</div>
     
-    <div id="mapScanLine"></div>
   </div>
   
   <div id="gps">--.------:--.------</div>
@@ -815,12 +750,10 @@ function scan() {
         // フィールド外
         meDot.style.display = "none";
         mapWarning.style.display = "flex";
-        mapScanLine.style.display = "block";
         return;
        }
       // フィールド内
       mapWarning.style.display = "none";
-      mapScanLine.style.display = "none";
       meDot.style.left = `${x}px`;
       meDot.style.top  = `${y}px`;
       meDot.style.display = "block";

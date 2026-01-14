@@ -159,11 +159,10 @@ h1, h2{
 /* 上下スラッシュは疑似要素 */
 #mapWarning::before,
 #mapWarning::after{
-  content: "////////////////////////////";
+  content: "////////////////////////////////////////////////////////////////////////////////////////////////";
   position: absolute;
   left: 50%;
-  transform: translateX(-50%) scaleY(0.55);
-
+  
   font-size: 22px;
   font-weight: 900;
   letter-spacing: 0.20em;
@@ -172,6 +171,11 @@ h1, h2{
   color: #ff4528;
   opacity: 0.95;
 
+  /* スラッシュが左右に流れる */
+@keyframes slashSlide{
+  0%   { transform: translateX(-50%) translateX(-60px) scaleY(0.45); }
+  100% { transform: translateX(-50%) translateX( 60px) scaleY(0.45); }
+}
   animation: slashSlide 1s linear infinite;
 }
 
@@ -308,7 +312,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
        ▼▼▼ ヴァージョン（ここ！） ▼▼▼
        「ここだけ」毎回更新する
        ========================= -->
-  <div class="version">Version 2.3.6</div>
+  <div class="version">Version 2.3.7</div>
   <!-- =========================
        ▲▲▲ ヴァージョン（ここ！） ▲▲▲
        ========================= -->

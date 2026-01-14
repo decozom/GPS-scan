@@ -142,28 +142,47 @@ h1, h2{
   position: absolute;
   inset: 0;
   display: none;
-
   align-items: center;
   justify-content: center;
 
-  font-size: 25px;        /* 少し大きいが主張しすぎない */
+  font-size: 25px;
   font-weight: 700;
   letter-spacing: 0.16em;
+  color: #ff4528;
 
-  color: #ff4528;         /* 前寄りの赤橙（戻した） */
-  text-shadow: none;
-    
+  z-index: 8;
+  pointer-events: none;
 
   animation: evaFade 1.3s infinite;
-  z-index: 9;
-  pointer-events: none;
 }
 
-/* 動かさない・フェードのみ */
-@keyframes evaFade {
-  0%   { opacity: 0.4; }
-  50%  { opacity: 1; }
-  100% { opacity: 0.25; }
+/* 上下スラッシュは疑似要素 */
+#mapWarning::before,
+#mapWarning::after{
+  content: "////////////////////////////";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) scaleY(0.55);
+
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.20em;
+  white-space: nowrap;
+
+  color: #ff4528;
+  opacity: 0.95;
+
+  animation: slashSlide 1s linear infinite;
+}
+
+#mapWarning::before{
+  top: 38%;
+  animation-direction: normal;
+}
+
+#mapWarning::after{
+  top: 62%;
+  animation-direction: reverse;
 }
 
 /* ===============================
@@ -289,7 +308,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
        ▼▼▼ ヴァージョン（ここ！） ▼▼▼
        「ここだけ」毎回更新する
        ========================= -->
-  <div class="version">Version 2.3.5</div>
+  <div class="version">Version 2.3.6</div>
   <!-- =========================
        ▲▲▲ ヴァージョン（ここ！） ▲▲▲
        ========================= -->

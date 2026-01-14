@@ -138,6 +138,9 @@ h1, h2{
 /* ===============================
    フィールド外警告（EVA控えめ版）
 ================================ */
+/* ===============================
+   フィールド外警告（フェード）
+================================ */
 #mapWarning{
   position: absolute;
   inset: 0;
@@ -156,37 +159,47 @@ h1, h2{
   animation: evaFade 1.3s infinite;
 }
 
-/* 上下スラッシュは疑似要素 */
+/* 動かさない・フェードのみ */
+@keyframes evaFade {
+  0%   { opacity: 0.4; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.25; }
+}
+
+/* 上下スラッシュ（疑似要素） */
 #mapWarning::before,
 #mapWarning::after{
   content: "////////////////////////////////////////////////////////////////////////////////////////////////";
   position: absolute;
   left: 50%;
-  
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 0.20em;
   white-space: nowrap;
 
+  font-size: 26px;       /* 極太感 */
+  font-weight: 950;
+  letter-spacing: 0.10em; /* 詰めて線っぽく */
   color: #ff4528;
   opacity: 0.95;
 
-  /* スラッシュが左右に流れる */
-@keyframes slashSlide{
-  0%   { transform: translateX(-50%) translateX(-60px) scaleY(0.45); }
-  100% { transform: translateX(-50%) translateX( 60px) scaleY(0.45); }
-}
-  animation: slashSlide 1s linear infinite;
+  /* ★ここが動き本体 */
+  animation: slashSlide 1.0s linear infinite;
 }
 
+/* 上の線：左へ流す */
 #mapWarning::before{
   top: 38%;
+  animation-direction: reverse;
+}
+
+/* 下の線：右へ流す */
+#mapWarning::after{
+  top: 62%;
   animation-direction: normal;
 }
 
-#mapWarning::after{
-  top: 62%;
-  animation-direction: reverse;
+/* ★スラッシュ移動（左右に流れる + 縦を短くして横長感） */
+@keyframes slashSlide{
+  0%   { transform: translateX(-50%) translateX(-120px) scaleY(0.35); }
+  100% { transform: translateX(-50%) translateX( 120px) scaleY(0.35); }
 }
 
 /* ===============================

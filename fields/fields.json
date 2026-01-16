@@ -1,7 +1,7 @@
 {
   "id": "oasis",
   "name": "oasis",
-  "image": "maps/oasis.jpg",
+  "image": "fields/oasis.jpg",
   "defaultImgScale": 0.45,
   "anchors": [
     {

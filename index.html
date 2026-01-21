@@ -531,26 +531,53 @@ function getDisplayedImageRect(scale){
 
   return { ox, oy, iw, ih };
 }
-/* JSON anchorsを正規化して持つ
-   - 推奨: JSONに baseW/baseH を入れる
-   - 無い場合: 420×420 とみなす（#mapの最大と同じなので破綻しにくい）
-*/
+
 function buildAnchorNorm(data){
   const baseW = Number(data.baseW ?? data.calibW ?? 420);
   const baseH = Number(data.baseH ?? data.calibH ?? 420);
 
   return data.anchors.map(a => ({
-    nx: (a.nx != null) ? Number(a.nx) : (Number(a.x) / baseW),
-    ny: (a.ny != null) ? Number(a.ny) : (Number(a.y) / baseH),
+    // 画像基準（新）
+    inx: (a.inx != null) ? Number(a.inx) : null,
+    iny: (a.iny != null) ? Number(a.iny) : null,
+
+    // 枠基準（旧）
+    nx: (a.nx != null) ? Number(a.nx) : null,
+    ny: (a.ny != null) ? Number(a.ny) : null,
+
+    // さらに旧（px）
+    x:  (a.x  != null) ? Number(a.x)  : null,
+    y:  (a.y  != null) ? Number(a.y)  : null,
+    baseW, baseH,
+
     lat: Number(a.lat),
     lon: Number(a.lon),
     label: a.label ?? ""
   }));
 }
 
-function normToPx(n){
-  const {w,h} = getMapSize();
-  return { x: n.nx * w, y: n.ny * h };
+function anchorToPx(a){
+  const { w, h } = getMapSize();
+
+  // 1) 新：画像基準 inx/iny
+  if (a.inx != null && a.iny != null) {
+    const scale = Number(currentField?.defaultImgScale ?? 1.0);
+    const rect = getDisplayedImageRect(scale);
+    return {
+      x: rect.ox + a.inx * rect.iw,
+      y: rect.oy + a.iny * rect.ih
+    };
+  }
+
+  // 2) 旧：枠基準 nx/ny
+  if (a.nx != null && a.ny != null) {
+    return { x: a.nx * w, y: a.ny * h };
+  }
+
+  // 3) さらに旧：px + baseW/baseH
+  const nx = (a.x != null) ? (a.x / a.baseW) : 0.5;
+  const ny = (a.y != null) ? (a.y / a.baseH) : 0.5;
+  return { x: nx * w, y: ny * h };
 }
 
 async function openFieldByFile(file) {
@@ -578,7 +605,16 @@ async function openFieldByFile(file) {
     // 画像：端末差でズレないよう「fit + scale」
     document.documentElement.style.setProperty("--imgScale", String(data.defaultImgScale ?? 1.0));
     mapImg.src = data.image;
-
+    mapImg.onload = () => {
+  try {
+    // anchors 正規化保持
+    anchorNorm = buildAnchorNorm(currentField);
+    prepareTransform(anchorNorm);
+  } catch (e) {
+    console.error(e);
+  }
+};
+    
     gpsEl.textContent = "--.------:--.------";
     meDot.style.display = "none";
     mapWarning.style.display = "none";
@@ -639,8 +675,7 @@ function computeHomography(anchorsNorm) {
   const A = [];
   const b = [];
 
-  // ★ ここで「今のmapサイズ」に変換してから解く
-  const anchorsPx = anchorsNorm.map(normToPx);
+  const anchorsPx = anchorsNorm.map(anchorToPx);
 
   for (let i = 0; i < 4; i++) {
     const p = anchorsNorm[i];

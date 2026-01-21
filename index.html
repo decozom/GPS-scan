@@ -505,6 +505,32 @@ function getMapSize(){
   return { w: Math.max(1, r.width), h: Math.max(1, r.height) };
 }
 
+function getDisplayedImageRect(scale){
+  const { w, h } = getMapSize();
+
+  // 画像未ロード時の保険
+  const nw = mapImg.naturalWidth  || 1;
+  const nh = mapImg.naturalHeight || 1;
+
+  const imgAspect = nw / nh;
+  const boxAspect = w / h;
+
+  let iw0, ih0;
+  if (imgAspect > boxAspect) {
+    iw0 = w;
+    ih0 = w / imgAspect;
+  } else {
+    ih0 = h;
+    iw0 = h * imgAspect;
+  }
+
+  const iw = iw0 * scale;
+  const ih = ih0 * scale;
+  const ox = (w - iw) / 2;
+  const oy = (h - ih) / 2;
+
+  return { ox, oy, iw, ih };
+}
 /* JSON anchorsを正規化して持つ
    - 推奨: JSONに baseW/baseH を入れる
    - 無い場合: 420×420 とみなす（#mapの最大と同じなので破綻しにくい）

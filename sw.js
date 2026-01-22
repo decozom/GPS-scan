@@ -3,8 +3,8 @@ const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
+  "./icons/icon-192.PNG",
+  "./icons/icon-512.PNG",
   "./fields/fields.json",
   "./fields/oasis.json",
   "./maps/oasis.jpg"

@@ -809,6 +809,10 @@ ro.observe(mapEl);
 updateDisplay(0);
 setStartStopIcon(false);
 loadFieldList();
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+
 </script>
 
 </body>

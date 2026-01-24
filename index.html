@@ -232,7 +232,7 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
   <h1>PING-PON</h1>
   <!--==========================================
   ============⬇︎⬇︎⬇︎⬇︎⬇︎ヴァージョン=============-->
-  <div class="version">Version 2.4.2</div>
+  <div class="version">Version 2.4.3</div>
 
   <div id="fieldList">読み込み中…</div>
 
@@ -338,56 +338,116 @@ function setStartStopIcon(isRunning){
 /* ==================================================
   タイマー関連（実時間差分方式）
 ================================================== */
+/* ==================================================
+  タイマー関連（Date.now基準 + 省電力 + 復元）
+================================================== */
+
+// localStorage keys
+const TIMER_STORE_KEY = "pingpon_timer_state_v1";
+
+/*
+  保存する状態:
+  {
+    setTimeMs: number,          // 設定分数から作った総時間(ms)
+    remainingMs: number,        // 一時停止中の残り(ms)（running=falseの時に使う）
+    running: boolean,
+    zeroMode: boolean,
+    endTimeMs: number|null      // running=trueの時の「終了予定 epoch(ms)」
+  }
+*/
+
 let setTimeMs = 0;
 let remainingMs = 0;
 let running = false;
 let zeroMode = false;
 
 let timerInterval = null;
-let startTimestamp = 0;
-let lastRemainingMs = 0;
+let endTimeMs = null; // Date.now() のepoch(ms)
 
-const TKEY = "pingpon_timer_v1";
+// tickを省電力化（50→200）
+const TICK_MS = 200;
 
-function saveTimerState(){
-  const data = {
+function persistTimerState(){
+  const state = {
     setTimeMs,
     remainingMs,
     running,
     zeroMode,
-    // running中だけ基準を持つ
-    startEpoch: running ? Date.now() : 0,
-    startRemainingMs: running ? remainingMs : 0,
+    endTimeMs: endTimeMs ?? null
   };
-  localStorage.setItem(TKEY, JSON.stringify(data));
+  try{
+    localStorage.setItem(TIMER_STORE_KEY, JSON.stringify(state));
+  }catch(e){
+    // 容量不足などは握りつぶし（動作優先）
+    console.warn("persistTimerState failed", e);
+  }
 }
 
-function loadTimerState(){
-  const raw = localStorage.getItem(TKEY);
-  if(!raw) return false;
+function restoreTimerState(){
+  const raw = localStorage.getItem(TIMER_STORE_KEY);
+  if(!raw) return;
+
   try{
-    const d = JSON.parse(raw);
+    const s = JSON.parse(raw);
+    if(typeof s !== "object" || s == null) return;
 
-    setTimeMs = Number(d.setTimeMs ?? 0);
-    remainingMs = Number(d.remainingMs ?? 0);
-    running = !!d.running;
-    zeroMode = !!d.zeroMode;
+    setTimeMs = Number(s.setTimeMs ?? 0);
+    remainingMs = Number(s.remainingMs ?? 0);
+    running = !!s.running;
+    zeroMode = !!s.zeroMode;
+    endTimeMs = (s.endTimeMs == null) ? null : Number(s.endTimeMs);
 
-    // ★走ってたら、復帰時に差分で再計算
-    if(running){
-      const startEpoch = Number(d.startEpoch ?? 0);
-      const startRemainingMs = Number(d.startRemainingMs ?? remainingMs);
-      const elapsed = Math.max(0, Date.now() - startEpoch);
-      remainingMs = Math.max(0, startRemainingMs - elapsed);
+    // running中なら「今」を基準に残りを再計算
+    if(running && endTimeMs != null){
+      const now = Date.now();
+      remainingMs = Math.max(0, endTimeMs - now);
 
       if(remainingMs === 0){
         running = false;
         zeroMode = true;
+        endTimeMs = null;
       }
     }
-    return true;
-  }catch{
-    return false;
+
+    setStartStopIcon(running);
+    updateDisplay(remainingMs);
+
+    // runningだったらインターバル復帰
+    if(running){
+      startTicking();
+    }
+  }catch(e){
+    console.warn("restoreTimerState failed", e);
+  }
+}
+
+function startTicking(){
+  stopTicking();
+
+  timerInterval = setInterval(() => {
+    if(!running || endTimeMs == null) return;
+
+    const now = Date.now();
+    remainingMs = Math.max(0, endTimeMs - now);
+
+    if(remainingMs === 0){
+      // 0到達
+      running = false;
+      zeroMode = true;
+      endTimeMs = null;
+      setStartStopIcon(false);
+      stopTicking();
+    }
+
+    updateDisplay(remainingMs);
+    persistTimerState();
+  }, TICK_MS);
+}
+
+function stopTicking(){
+  if(timerInterval){
+    clearInterval(timerInterval);
+    timerInterval = null;
   }
 }
 
@@ -395,61 +455,75 @@ function setTimer() {
   document.activeElement?.blur?.();
   const min = Number(document.getElementById('minuteInput').value);
 
-  setTimeMs = min * 60 * 1000;
+  setTimeMs = Math.max(0, min * 60 * 1000);
   remainingMs = setTimeMs;
 
   running = false;
   zeroMode = false;
+  endTimeMs = null;
+
+  stopTicking();
   setStartStopIcon(false);
   updateDisplay(remainingMs);
 
+  persistTimerState();
   show('field');
-  saveTimerState();
 }
 
 function toggleStart() {
-  if (!running) {
-    if (remainingMs <= 0) remainingMs = setTimeMs;
+  // まだタイマーセットしてない（0）場合はそのまま
+  if(setTimeMs <= 0){
+    // 0のまま開始しても意味ないので、表示だけ整える
+    updateDisplay(remainingMs);
+    return;
+  }
+
+  if(!running){
+    // START
+    if(remainingMs <= 0){
+      remainingMs = setTimeMs;
+      zeroMode = false;
+    }
 
     running = true;
     zeroMode = false;
+
+    // Date.now 基準で「終了予定時刻」を固定
+    endTimeMs = Date.now() + remainingMs;
+
     setStartStopIcon(true);
+    updateDisplay(remainingMs);
+    persistTimerState();
 
-    startTimestamp = performance.now();
-    lastRemainingMs = remainingMs;
+    startTicking();
 
-    timerInterval = setInterval(() => {
-      const elapsed = performance.now() - startTimestamp;
-      remainingMs = Math.max(0, lastRemainingMs - elapsed);
+  }else{
+    // STOP（一時停止）
+    // 今の残りを確定
+    if(endTimeMs != null){
+      remainingMs = Math.max(0, endTimeMs - Date.now());
+    }
+    running = false;
+    endTimeMs = null;
 
-      if (remainingMs === 0) {
-        stopTimer();
-        zeroMode = true;
-        setStartStopIcon(false);
-      }
-      updateDisplay(remainingMs);
-    }, 50);
-
-  } else {
-    stopTimer();
+    stopTicking();
     setStartStopIcon(false);
+    updateDisplay(remainingMs);
+    persistTimerState();
   }
 }
 
-function stopTimer() {
-  running = false;
-  clearInterval(timerInterval);
-  timerInterval = null;
-  saveTimerState();
-}
-
 function resetTimer() {
-  stopTimer();
+  running = false;
   zeroMode = false;
+  endTimeMs = null;
+
+  stopTicking();
   remainingMs = setTimeMs;
+
   setStartStopIcon(false);
   updateDisplay(remainingMs);
-  saveTimerState();
+  persistTimerState();
 }
 
 function updateDisplay(ms) {
@@ -852,12 +926,52 @@ const ro = new ResizeObserver(() => {
 ro.observe(mapEl);
 
 /* ==================================================
+  省電力 & 復帰時のズレ防止
+================================================== */
+
+function recalcRemainingIfRunning(){
+  if(running && endTimeMs != null){
+    remainingMs = Math.max(0, endTimeMs - Date.now());
+    if(remainingMs === 0){
+      running = false;
+      zeroMode = true;
+      endTimeMs = null;
+      setStartStopIcon(false);
+      stopTicking();
+    }
+    updateDisplay(remainingMs);
+  }
+}
+
+// 画面が隠れた/戻った時に再計算＋保存
+document.addEventListener("visibilitychange", () => {
+  recalcRemainingIfRunning();
+  persistTimerState();
+
+  // 表示復帰したらtickを確実に再開
+  if(!document.hidden && running){
+    startTicking();
+  }
+});
+
+// iOS/Androidで「閉じる/バックグラウンド移行」に近いイベント
+window.addEventListener("pagehide", () => {
+  recalcRemainingIfRunning();
+  persistTimerState();
+}, { capture: true });
+
+// 念のため
+window.addEventListener("beforeunload", () => {
+  recalcRemainingIfRunning();
+  persistTimerState();
+}, { capture: true });
+
+/* ==================================================
   起動
 ================================================== */
-loadTimerState();                 // ★追加
-updateDisplay(remainingMs);        // ★変更：0固定じゃなく復元値
-setStartStopIcon(running);         // ★変更：復元した状態に合わせる
+restoreTimerState();   // ←追加（復元）
 loadFieldList();
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js");
 }

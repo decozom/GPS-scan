@@ -347,6 +347,50 @@ let timerInterval = null;
 let startTimestamp = 0;
 let lastRemainingMs = 0;
 
+const TKEY = "pingpon_timer_v1";
+
+function saveTimerState(){
+  const data = {
+    setTimeMs,
+    remainingMs,
+    running,
+    zeroMode,
+    // running中だけ基準を持つ
+    startEpoch: running ? Date.now() : 0,
+    startRemainingMs: running ? remainingMs : 0,
+  };
+  localStorage.setItem(TKEY, JSON.stringify(data));
+}
+
+function loadTimerState(){
+  const raw = localStorage.getItem(TKEY);
+  if(!raw) return false;
+  try{
+    const d = JSON.parse(raw);
+
+    setTimeMs = Number(d.setTimeMs ?? 0);
+    remainingMs = Number(d.remainingMs ?? 0);
+    running = !!d.running;
+    zeroMode = !!d.zeroMode;
+
+    // ★走ってたら、復帰時に差分で再計算
+    if(running){
+      const startEpoch = Number(d.startEpoch ?? 0);
+      const startRemainingMs = Number(d.startRemainingMs ?? remainingMs);
+      const elapsed = Math.max(0, Date.now() - startEpoch);
+      remainingMs = Math.max(0, startRemainingMs - elapsed);
+
+      if(remainingMs === 0){
+        running = false;
+        zeroMode = true;
+      }
+    }
+    return true;
+  }catch{
+    return false;
+  }
+}
+
 function setTimer() {
   document.activeElement?.blur?.();
   const min = Number(document.getElementById('minuteInput').value);
@@ -360,6 +404,7 @@ function setTimer() {
   updateDisplay(remainingMs);
 
   show('field');
+  saveTimerState();
 }
 
 function toggleStart() {
@@ -395,6 +440,7 @@ function stopTimer() {
   running = false;
   clearInterval(timerInterval);
   timerInterval = null;
+  saveTimerState();
 }
 
 function resetTimer() {
@@ -403,6 +449,7 @@ function resetTimer() {
   remainingMs = setTimeMs;
   setStartStopIcon(false);
   updateDisplay(remainingMs);
+  saveTimerState();
 }
 
 function updateDisplay(ms) {
@@ -807,8 +854,9 @@ ro.observe(mapEl);
 /* ==================================================
   起動
 ================================================== */
-updateDisplay(0);
-setStartStopIcon(false);
+loadTimerState();                 // ★追加
+updateDisplay(remainingMs);        // ★変更：0固定じゃなく復元値
+setStartStopIcon(running);         // ★変更：復元した状態に合わせる
 loadFieldList();
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js");

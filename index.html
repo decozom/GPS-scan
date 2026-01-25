@@ -1,13 +1,20 @@
-<!DOCTYPE html>
-<html lang="ja">
+<!-- ============ HEAD ============ -->
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>PING-PON</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#00e5ff">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-<style> /* ===CSS=== */
+  <title>PING-PON</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00e5ff">
+
+  <!-- ============ CSS は次のブロックに分離 ============ -->
+</head>
+
+<!-- ============ CSS ============ -->
+<style>
+/* ===CSS=== */
 body {
   margin: 0;
   background: #111;
@@ -56,7 +63,7 @@ h1, h2{
 ================================================== */
 #map {
   width: min(96vw, 420px);
-  aspect-ratio: 1 / 1;         /* ★ heightを固定計算にしない：端末差でズレにくい */
+  aspect-ratio: 1 / 1;         /* ★ height固定計算にしない：端末差でズレにくい */
   margin: 6px auto 6px;
 
   background: #222;
@@ -221,90 +228,97 @@ button { font-size: 16px; padding: 8px 14px; margin: 5px; }
 #settings button, #timerSet button{ margin: 4px; }
 #timerSet input{ margin: 4px 0 0; }
 </style>
-</head>
 
+<!-- ============ HTML ============ -->
+<body>
+  <!-- ==================================================
+       メイン画面（フィールド選択）
+  ================================================== -->
+  <div id="main" class="screen active">
+    <h1>PING-PON</h1>
 
-<body>    <!-- ====HTML==== -->
-<!-- ==================================================
-     メイン画面（フィールド選択）
-================================================== -->
-<div id="main" class="screen active">
-  <h1>PING-PON</h1>
-  <!--==========================================
-  ============⬇︎⬇︎⬇︎⬇︎⬇︎ヴァージョン=============-->
-  <div class="version">Version 2.4.3</div>
+    <!--==========================================
+    ============⬇︎⬇︎⬇︎⬇︎⬇︎  VERSION  ⬇︎⬇︎⬇︎⬇︎⬇︎=============-->
+    <div class="version">★★ Version 2.4.5 ★★</div>
+    <!--==========================================-->
 
-  <div id="fieldList">読み込み中…</div>
+    <div id="fieldList">読み込み中…</div>
 
-  <div id="pager">
-    <button type="button" onclick="prevPage()">◀</button>
-    <span id="pageInfo">- / -</span>
-    <button type="button" onclick="nextPage()">▶</button>
-  </div>
-</div>
-
-<!-- ==================================================
-     フィールド画面（タイマー＋マップ）
-================================================== -->
-<div id="field" class="screen">
-  <h2 id="fieldTitle">Field</h2>
-
-  <div id="timer">00:00</div>
-
-  <div id="map">
-    <div class="grid"></div>
-    <div id="gridLabels"></div>
-    <img id="mapImg" alt="map">
-    <div id="meDot"></div>
-    <div id="mapWarning">//OUT OF FIELD//</div>
+    <div id="pager">
+      <button type="button" onclick="prevPage()">◀</button>
+      <span id="pageInfo">- / -</span>
+      <button type="button" onclick="nextPage()">▶</button>
+    </div>
   </div>
 
-  <div id="gps">--.------:--.------</div>
+  <!-- ==================================================
+       フィールド画面（タイマー＋マップ）
+  ================================================== -->
+  <div id="field" class="screen">
+    <h2 id="fieldTitle">Field</h2>
 
-  <div class="icon-row">
-    <button id="btnStartStop" class="icon-btn" type="button" onclick="toggleStart()" aria-label="Start/Stop"></button>
+    <div id="timer">00:00</div>
 
-    <button class="icon-btn" type="button" onclick="resetTimer()" aria-label="Reset">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-10.24 4.24l-1.42 1.42A8 8 0 0 0 20 13c0-4.42-3.58-8-8-8z"></path>
-      </svg>
-    </button>
+    <div id="map">
+      <div class="grid"></div>
+      <div id="gridLabels"></div>
+      <img id="mapImg" alt="map">
+      <div id="meDot"></div>
+      <div id="mapWarning">//OUT OF FIELD//</div>
+    </div>
 
-    <button class="icon-btn" type="button" onclick="scan()" aria-label="GPS Scan">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 8a4 4 0 1 0 .001 8.001A4 4 0 0 0 12 8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 .001-14.001A7 7 0 0 1 12 19z"></path>
-      </svg>
-    </button>
+    <div id="gps">--.------:--.------</div>
 
-    <button class="icon-btn" type="button" onclick="openSettings()" aria-label="Settings">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.52-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.41 1.05.72 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96c.21.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"></path>
-      </svg>
-    </button>
+    <div class="icon-row">
+      <button id="btnStartStop" class="icon-btn" type="button" onclick="toggleStart()" aria-label="Start/Stop"></button>
+
+      <button class="icon-btn" type="button" onclick="resetTimer()" aria-label="Reset">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-10.24 4.24l-1.42 1.42A8 8 0 0 0 20 13c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+      </button>
+
+      <button class="icon-btn" type="button" onclick="scan()" aria-label="GPS Scan">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 8a4 4 0 1 0 .001 8.001A4 4 0 0 0 12 8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 .001-14.001A7 7 0 0 1 12 19z"></path>
+        </svg>
+      </button>
+
+      <button class="icon-btn" type="button" onclick="openSettings()" aria-label="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.12.52-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.41 1.05.72 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.22 1.12-.53 1.63-.94l2.39.96c.21.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"></path>
+        </svg>
+      </button>
+    </div>
   </div>
-</div>
 
-<!-- ==================================================
-     設定画面
-================================================== -->
-<div id="settings" class="screen">
-  <h2>Settings</h2>
-  <button type="button" onclick="openTimerSet()">タイマーセット</button><br>
-  <button type="button" onclick="backToMain()">メイン画面に戻る</button>
-</div>
+  <!-- ==================================================
+       設定画面
+  ================================================== -->
+  <div id="settings" class="screen">
+    <h2>Settings</h2>
+    <button type="button" onclick="openTimerSet()">タイマーセット</button><br>
+    <button type="button" onclick="backToMain()">メイン画面に戻る</button>
+  </div>
 
-<!-- ==================================================
-     タイマー設定画面
-================================================== -->
-<div id="timerSet" class="screen">
-  <h2>Timer Set (min)</h2>
-  <input id="minuteInput" type="number" min="0" value="0">
-  <br><br>
-  <button type="button" onclick="setTimer()">決定</button>
-  <button type="button" onclick="openSettings()">戻る</button>
-</div>
+  <!-- ==================================================
+       タイマー設定画面
+  ================================================== -->
+  <div id="timerSet" class="screen">
+    <h2>Timer Set (min)</h2>
+    <input id="minuteInput" type="number" min="0" value="0">
+    <br><br>
+    <button type="button" onclick="setTimer()">決定</button>
+    <button type="button" onclick="openSettings()">戻る</button>
+  </div>
 
-<script> /* ===JS=== */
+  <!-- ============ JS は次のブロックに分離 ============ -->
+</body>
+
+<!-- ============ JS ============ -->
+<script>
+/* ===JS=== */
+
 /* ==================================================
   画面切り替え
 ================================================== */
@@ -336,9 +350,6 @@ function setStartStopIcon(isRunning){
 }
 
 /* ==================================================
-  タイマー関連（実時間差分方式）
-================================================== */
-/* ==================================================
   タイマー関連（Date.now基準 + 省電力 + 復元）
 ================================================== */
 
@@ -349,10 +360,10 @@ const TIMER_STORE_KEY = "pingpon_timer_state_v1";
   保存する状態:
   {
     setTimeMs: number,          // 設定分数から作った総時間(ms)
-    remainingMs: number,        // 一時停止中の残り(ms)（running=falseの時に使う）
+    remainingMs: number,        // 一時停止中の残り(ms)
     running: boolean,
     zeroMode: boolean,
-    endTimeMs: number|null      // running=trueの時の「終了予定 epoch(ms)」
+    endTimeMs: number|null      // running=true のときの終了予定 epoch(ms)
   }
 */
 
@@ -362,30 +373,56 @@ let running = false;
 let zeroMode = false;
 
 let timerInterval = null;
-let endTimeMs = null; // Date.now() のepoch(ms)
+let endTimeMs = null; // Date.now() epoch(ms)
 
 // tickを省電力化（50→200）
 const TICK_MS = 200;
 
 function persistTimerState(){
-  const state = {
-    setTimeMs,
-    remainingMs,
-    running,
-    zeroMode,
-    endTimeMs: endTimeMs ?? null
-  };
+  const state = { setTimeMs, remainingMs, running, zeroMode, endTimeMs: endTimeMs ?? null };
   try{
     localStorage.setItem(TIMER_STORE_KEY, JSON.stringify(state));
   }catch(e){
-    // 容量不足などは握りつぶし（動作優先）
     console.warn("persistTimerState failed", e);
   }
 }
 
+function stopTicking(){
+  if(timerInterval){
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function startTicking(){
+  stopTicking();
+
+  timerInterval = setInterval(() => {
+    if(!running || endTimeMs == null) return;
+
+    const now = Date.now();
+    remainingMs = Math.max(0, endTimeMs - now);
+
+    if(remainingMs === 0){
+      running = false;
+      zeroMode = true;
+      endTimeMs = null;
+      setStartStopIcon(false);
+      stopTicking();
+    }
+
+    updateDisplay(remainingMs);
+    persistTimerState();
+  }, TICK_MS);
+}
+
 function restoreTimerState(){
   const raw = localStorage.getItem(TIMER_STORE_KEY);
-  if(!raw) return;
+  if(!raw) {
+    setStartStopIcon(false);
+    updateDisplay(0);
+    return;
+  }
 
   try{
     const s = JSON.parse(raw);
@@ -401,7 +438,6 @@ function restoreTimerState(){
     if(running && endTimeMs != null){
       const now = Date.now();
       remainingMs = Math.max(0, endTimeMs - now);
-
       if(remainingMs === 0){
         running = false;
         zeroMode = true;
@@ -412,42 +448,11 @@ function restoreTimerState(){
     setStartStopIcon(running);
     updateDisplay(remainingMs);
 
-    // runningだったらインターバル復帰
     if(running){
       startTicking();
     }
   }catch(e){
     console.warn("restoreTimerState failed", e);
-  }
-}
-
-function startTicking(){
-  stopTicking();
-
-  timerInterval = setInterval(() => {
-    if(!running || endTimeMs == null) return;
-
-    const now = Date.now();
-    remainingMs = Math.max(0, endTimeMs - now);
-
-    if(remainingMs === 0){
-      // 0到達
-      running = false;
-      zeroMode = true;
-      endTimeMs = null;
-      setStartStopIcon(false);
-      stopTicking();
-    }
-
-    updateDisplay(remainingMs);
-    persistTimerState();
-  }, TICK_MS);
-}
-
-function stopTicking(){
-  if(timerInterval){
-    clearInterval(timerInterval);
-    timerInterval = null;
   }
 }
 
@@ -473,7 +478,6 @@ function setTimer() {
 function toggleStart() {
   // まだタイマーセットしてない（0）場合はそのまま
   if(setTimeMs <= 0){
-    // 0のまま開始しても意味ないので、表示だけ整える
     updateDisplay(remainingMs);
     return;
   }
@@ -488,7 +492,7 @@ function toggleStart() {
     running = true;
     zeroMode = false;
 
-    // Date.now 基準で「終了予定時刻」を固定
+    // Date.now基準で「終了予定時刻」を固定
     endTimeMs = Date.now() + remainingMs;
 
     setStartStopIcon(true);
@@ -499,7 +503,6 @@ function toggleStart() {
 
   }else{
     // STOP（一時停止）
-    // 今の残りを確定
     if(endTimeMs != null){
       remainingMs = Math.max(0, endTimeMs - Date.now());
     }
@@ -570,8 +573,8 @@ let fieldListData = [];
 let currentPage = 0;
 const FIELDS_PER_PAGE = 6;
 
-/* anchorsを「正規化(nx,ny)」で保持する（端末差を吸収） */
-let anchorNorm = null; // [{nx,ny,lat,lon} x4]
+/* anchorsを保持（画像基準 inx/iny or 枠基準 nx/ny 互換） */
+let anchorNorm = null; // [{inx,iny,nx,ny,x,y,baseW,baseH,lat,lon,label} x4]
 
 async function loadFieldList() {
   try {
@@ -629,6 +632,7 @@ function getMapSize(){
   return { w: Math.max(1, r.width), h: Math.max(1, r.height) };
 }
 
+/* object-fit: contain + scale の「実表示画像矩形」を推定 */
 function getDisplayedImageRect(scale){
   const { w, h } = getMapSize();
 
@@ -661,17 +665,18 @@ function buildAnchorNorm(data){
   const baseH = Number(data.baseH ?? data.calibH ?? 420);
 
   return data.anchors.map(a => ({
-    // 画像基準（新）
+    // 新：画像基準 inx/iny（推奨）
     inx: (a.inx != null) ? Number(a.inx) : null,
     iny: (a.iny != null) ? Number(a.iny) : null,
 
-    // 枠基準（旧）
+    // 旧：枠基準 nx/ny
     nx: (a.nx != null) ? Number(a.nx) : null,
     ny: (a.ny != null) ? Number(a.ny) : null,
 
-    // さらに旧（px）
+    // さらに旧：px
     x:  (a.x  != null) ? Number(a.x)  : null,
     y:  (a.y  != null) ? Number(a.y)  : null,
+
     baseW, baseH,
 
     lat: Number(a.lat),
@@ -718,36 +723,25 @@ async function openFieldByFile(file) {
     currentField = data;
     document.getElementById("fieldTitle").textContent = data.name || data.id || "Field";
 
-    // タイマー初期化
-    setTimeMs = 0;
-    remainingMs = 0;
-    running = false;
-    zeroMode = false;
-    setStartStopIcon(false);
-    updateDisplay(0);
-
     // 画像：端末差でズレないよう「fit + scale」
     document.documentElement.style.setProperty("--imgScale", String(data.defaultImgScale ?? 1.0));
-    mapImg.src = data.image;
-    mapImg.onload = () => {
-  try {
-    // anchors 正規化保持
-    anchorNorm = buildAnchorNorm(currentField);
-    prepareTransform(anchorNorm);
-  } catch (e) {
-    console.error(e);
-  }
-};
-    
+
+    // 表示リセット
     gpsEl.textContent = "--.------:--.------";
     meDot.style.display = "none";
     mapWarning.style.display = "none";
 
-    // ★ anchors 正規化保持
-    anchorNorm = buildAnchorNorm(data);
-
-    // 変換準備
-    prepareTransform(anchorNorm);
+    // ★重要：画像がロードされて naturalWidth/Height が確定してから transform確定
+    mapImg.onload = () => {
+      try{
+        anchorNorm = buildAnchorNorm(data);
+        prepareTransform(anchorNorm);   // ← ここで1回だけ
+        buildGridLabels(30);
+      }catch(e){
+        console.error(e);
+      }
+    };
+    mapImg.src = data.image;
 
     show("field");
     requestAnimationFrame(() => buildGridLabels(30));
@@ -760,7 +754,6 @@ async function openFieldByFile(file) {
 
 /* ==================================================
   4点GPS → マップXY（ホモグラフィ）
-  ※ anchorsは「正規化(nx,ny)+lat/lon」を使う
 ================================================== */
 const R = 6378137;
 
@@ -795,14 +788,14 @@ function solveLinear(A, b) {
   return M.map(row => row[n]);
 }
 
-function computeHomography(anchorsNorm) {
+function computeHomography(anchors) {
   const A = [];
   const b = [];
 
-  const anchorsPx = anchorsNorm.map(anchorToPx);
+  const anchorsPx = anchors.map(anchorToPx);
 
   for (let i = 0; i < 4; i++) {
-    const p = anchorsNorm[i];
+    const p = anchors[i];
     const { x, y } = anchorsPx[i];
     const { X, Y } = latLonToLocalMeters(p.lat, p.lon);
 
@@ -812,11 +805,11 @@ function computeHomography(anchorsNorm) {
   return solveLinear(A, b);
 }
 
-function prepareTransform(anchorsNorm) {
-  lat0 = anchorsNorm.reduce((s,a)=>s+a.lat,0)/4;
-  lon0 = anchorsNorm.reduce((s,a)=>s+a.lon,0)/4;
+function prepareTransform(anchors) {
+  lat0 = anchors.reduce((s,a)=>s+a.lat,0)/4;
+  lon0 = anchors.reduce((s,a)=>s+a.lon,0)/4;
   cosLat0 = Math.cos(lat0 * Math.PI/180);
-  H = computeHomography(anchorsNorm);
+  H = computeHomography(anchors);
 }
 
 /* resizeでmapサイズが変わったらHを作り直す（超重要） */
@@ -928,7 +921,6 @@ ro.observe(mapEl);
 /* ==================================================
   省電力 & 復帰時のズレ防止
 ================================================== */
-
 function recalcRemainingIfRunning(){
   if(running && endTimeMs != null){
     remainingMs = Math.max(0, endTimeMs - Date.now());
@@ -943,24 +935,19 @@ function recalcRemainingIfRunning(){
   }
 }
 
-// 画面が隠れた/戻った時に再計算＋保存
 document.addEventListener("visibilitychange", () => {
   recalcRemainingIfRunning();
   persistTimerState();
-
-  // 表示復帰したらtickを確実に再開
   if(!document.hidden && running){
     startTicking();
   }
 });
 
-// iOS/Androidで「閉じる/バックグラウンド移行」に近いイベント
 window.addEventListener("pagehide", () => {
   recalcRemainingIfRunning();
   persistTimerState();
 }, { capture: true });
 
-// 念のため
 window.addEventListener("beforeunload", () => {
   recalcRemainingIfRunning();
   persistTimerState();
@@ -969,14 +956,11 @@ window.addEventListener("beforeunload", () => {
 /* ==================================================
   起動
 ================================================== */
-restoreTimerState();   // ←追加（復元）
+restoreTimerState();
 loadFieldList();
+setStartStopIcon(running);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js");
 }
-
 </script>
-
-</body>
-</html>

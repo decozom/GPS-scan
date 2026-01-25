@@ -356,6 +356,12 @@ function setStartStopIcon(isRunning){
 // localStorage keys
 const TIMER_STORE_KEY = "pingpon_timer_state_v1";
 
+// ===== tick間隔を残り時間で切り替える =====
+function getTickMs(){
+  // cs表示している時間帯（3分以下）は細かく
+  return (remainingMs <= 180000) ? 50 : 200;
+}
+
 /*
   保存する状態:
   {
@@ -375,8 +381,6 @@ let zeroMode = false;
 let timerInterval = null;
 let endTimeMs = null; // Date.now() epoch(ms)
 
-// tickを省電力化（50→200）
-const TICK_MS = 200;
 
 function persistTimerState(){
   const state = { setTimeMs, remainingMs, running, zeroMode, endTimeMs: endTimeMs ?? null };
@@ -394,10 +398,12 @@ function stopTicking(){
   }
 }
 
+let timerTimeout = null;
+
 function startTicking(){
   stopTicking();
 
-  timerInterval = setInterval(() => {
+  const loop = () => {
     if(!running || endTimeMs == null) return;
 
     const now = Date.now();
@@ -408,12 +414,27 @@ function startTicking(){
       zeroMode = true;
       endTimeMs = null;
       setStartStopIcon(false);
+      updateDisplay(0);
+      persistTimerState();
       stopTicking();
+      return;
     }
 
     updateDisplay(remainingMs);
     persistTimerState();
-  }, TICK_MS);
+
+    // ★ 残り時間に応じて tick を切り替える
+    timerTimeout = setTimeout(loop, getTickMs());
+  };
+
+  loop();
+}
+
+function stopTicking(){
+  if(timerTimeout){
+    clearTimeout(timerTimeout);
+    timerTimeout = null;
+  }
 }
 
 function restoreTimerState(){
